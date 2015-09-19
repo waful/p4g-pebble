@@ -12,6 +12,31 @@
     "resources": {
         "media": [
             {
+                "file": "images/noon.png",
+                "name": "IMAGE_NOON",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/night.png",
+                "name": "IMAGE_NIGHT",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/morning.png",
+                "name": "IMAGE_MORNING",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/daytime.png",
+                "name": "IMAGE_DAYTIME",
+                "type": "png-trans"
+            },
+            {
+                "file": "images/evening.png",
+                "name": "IMAGE_EVENING",
+                "type": "png-trans"
+            },
+            {
                 "file": "images/bg.png",
                 "name": "IMAGE_BACKGROUND",
                 "type": "png"

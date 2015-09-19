@@ -57,15 +57,15 @@ static void render_day_of_week_layer(uint8_t day_of_week){
 static void update_time() {
     time_t temp = time(NULL); 
     struct tm *tick_time = localtime(&temp);
-    static char old_time[] = "----";
+    static char old_time[] = "------";
     static char old_date[] = "-----";
 
-    char time_buffer[] = "0000";
+    char time_buffer[] = "0000  ";
     char date_buffer[] = "00000";
     if(clock_is_24h_style() == true) {
-        strftime(time_buffer, sizeof(time_buffer), "%H%M", tick_time);
+        strftime(time_buffer, sizeof(time_buffer), "%H%M  ", tick_time);
     } else {
-        strftime(time_buffer, sizeof(time_buffer), "%I%M", tick_time);
+        strftime(time_buffer, sizeof(time_buffer), "%I%M%P", tick_time);
     }
     strftime(date_buffer, sizeof(date_buffer), "%m%d%w", tick_time);
     
