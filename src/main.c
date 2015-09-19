@@ -18,11 +18,13 @@ static BitmapLayer *s_time_digit_1_layer;
 static BitmapLayer *s_time_digit_2_layer;
 static BitmapLayer *s_time_digit_3_layer;
 static BitmapLayer *s_time_digit_4_layer;
+static BitmapLayer *s_time_of_day_layer;
 
 static GBitmap *s_background_bitmap;
 static GBitmap *s_digit_array[10];
+static GBitmap *s_time_of_day_array[5];
 
-static void render_digit_layer_with_bitmap(BitmapLayer* layer, uint8_t digit){
+static void render_digit_layer_with_bitmap(BitmapLayer *layer, uint8_t digit){
     // get the right bitmap
     GBitmap *b_digit = s_digit_array[digit];
     bitmap_layer_set_bitmap(layer, b_digit);
@@ -59,6 +61,7 @@ static void update_time() {
     struct tm *tick_time = localtime(&temp);
     static char old_time[] = "------";
     static char old_date[] = "-----";
+    static uint8_t old_hour = 99;
 
     char time_buffer[] = "0000  ";
     char date_buffer[] = "00000";
@@ -83,6 +86,35 @@ static void update_time() {
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
     
+    uint8_t hour_buffer = (time_buffer[0] - '0') * 10 + (time_buffer[1] - '0');
+    if(hour_buffer != old_hour){
+        // morning
+        if(hour_buffer >= 5 && hour_buffer <= 8 && time_buffer[4] != 'P'){
+            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[2]);
+        }
+        // daytime
+        else if((hour_buffer >= 9 && hour_buffer <= 11 && time_buffer[4] != 'P')
+                 || (hour_buffer >= 1 && hour_buffer <= 5 && time_buffer[4] == 'P')
+                 || (hour_buffer >= 13 && hour_buffer <= 17)){
+            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[0]);
+        }
+        // noon
+        else if(hour_buffer == 12 && time_buffer[4] != 'A'){
+            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[4]);
+        }
+        // evening
+        else if((hour_buffer >= 6 && hour_buffer <= 9 && time_buffer[4] == 'P')
+                 || (hour_buffer >= 18 && hour_buffer <= 21)){
+            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[1]);
+        }
+        // night
+        else{
+            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[3]);
+        }
+    }
+    old_hour = hour_buffer;
+    
+    
     
     if(date_buffer[0] != old_date[0]){
         render_digit_layer_with_bitmap(s_date_digit_1_layer, date_buffer[0] - '0');
@@ -102,7 +134,7 @@ static void update_time() {
     memcpy(old_date, date_buffer, sizeof(old_date));
 }
 
-static void update_temp(char temp[], uint8_t condition){
+static void update_temp(uint8_t condition){
     
 }
 
@@ -135,6 +167,9 @@ static void setup_layers(Window *window){
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_3_layer));
     s_time_digit_4_layer = bitmap_layer_create(GRect(122, 144, 17, 16));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_4_layer));
+    s_time_of_day_layer = bitmap_layer_create(GRect(5, 37, 75, 25));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_of_day_layer));
+    bitmap_layer_set_compositing_mode(s_time_of_day_layer, GCompOpSet);
     
     // set up day of week
     s_day_of_week_layer = text_layer_create(GRect(85, 8, 46, 18));
@@ -161,6 +196,16 @@ static void setup_bitmaps(){
         gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_9)
     };
     memcpy(s_digit_array, tmp_digit_array, sizeof(s_digit_array));
+    
+    // set up digits array
+    GBitmap *tmp_time_of_day_array[5] = {
+        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAYTIME),
+        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_EVENING),
+        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MORNING),
+        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT),
+        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NOON)
+    };
+    memcpy(s_time_of_day_array, tmp_time_of_day_array, sizeof(s_time_of_day_array));
 }
 
 static void setup_texts_and_fonts(){
@@ -177,7 +222,7 @@ static void main_window_load(Window *window) {
     
     update_background();
     update_time();
-    update_temp("??", -1);
+    update_temp(-1);
 }
 
 static void main_window_unload(Window *window) {
@@ -187,8 +232,11 @@ static void main_window_unload(Window *window) {
     // destroy bitmaps
     gbitmap_destroy(s_background_bitmap);
     uint8_t i;
-    for(i = 0; i < sizeof(s_digit_array); i++){
+    for(i = 0; i < sizeof(s_digit_array)/sizeof(s_digit_array[0]); i++){
         gbitmap_destroy(s_digit_array[i]);
+    }
+    for(i = 0; i < sizeof(s_time_of_day_array)/sizeof(s_time_of_day_array[0]); i++){
+        gbitmap_destroy(s_time_of_day_array[i]);
     }
 
     // destroy layers
@@ -201,6 +249,7 @@ static void main_window_unload(Window *window) {
     bitmap_layer_destroy(s_time_digit_2_layer);
     bitmap_layer_destroy(s_time_digit_3_layer);
     bitmap_layer_destroy(s_time_digit_4_layer);
+    bitmap_layer_destroy(s_time_of_day_layer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -221,17 +270,13 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-    // Store incoming information
-    char tmp_temperature[3];
+    // store incoming information
     uint8_t tmp_condition;
 
     // iterate through payload
     Tuple *t;
     for(t = dict_read_first(iterator); t != NULL; t = dict_read_next(iterator)) {
         switch(t->key) {
-        case KEY_TEMPERATURE:
-            snprintf(tmp_temperature, sizeof(tmp_temperature), "%d", (int)t->value->int8);
-            break;
         case KEY_CONDITIONS:
             tmp_condition = (int)t->value->uint8;
             break;
@@ -241,7 +286,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
     }
     
-    update_temp(tmp_temperature, tmp_condition);
+    update_temp(tmp_condition);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {

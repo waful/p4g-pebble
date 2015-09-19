@@ -14,51 +14,31 @@
             {
                 "file": "images/noon.png",
                 "name": "IMAGE_NOON",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/night.png",
                 "name": "IMAGE_NIGHT",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/morning.png",
                 "name": "IMAGE_MORNING",
-                "type": "png-trans"
-            },
-            {
-                "file": "images/daytime.png",
-                "name": "IMAGE_DAYTIME",
-                "type": "png-trans"
+                "type": "png"
             },
             {
                 "file": "images/evening.png",
                 "name": "IMAGE_EVENING",
-                "type": "png-trans"
-            },
-            {
-                "file": "images/bg.png",
-                "name": "IMAGE_BACKGROUND",
                 "type": "png"
             },
             {
-                "file": "images/digit_2.png",
-                "name": "IMAGE_DIGIT_2",
+                "file": "images/daytime.png",
+                "name": "IMAGE_DAYTIME",
                 "type": "png"
             },
             {
-                "file": "images/digit_0.png",
-                "name": "IMAGE_DIGIT_0",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_3.png",
-                "name": "IMAGE_DIGIT_3",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_6.png",
-                "name": "IMAGE_DIGIT_6",
+                "file": "images/digit_8.png",
+                "name": "IMAGE_DIGIT_8",
                 "type": "png"
             },
             {
@@ -67,8 +47,28 @@
                 "type": "png"
             },
             {
-                "file": "images/digit_4.png",
-                "name": "IMAGE_DIGIT_4",
+                "file": "images/digit_0.png",
+                "name": "IMAGE_DIGIT_0",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_2.png",
+                "name": "IMAGE_DIGIT_2",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_1.png",
+                "name": "IMAGE_DIGIT_1",
+                "type": "png"
+            },
+            {
+                "file": "images/bg.png",
+                "name": "IMAGE_BACKGROUND",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_5.png",
+                "name": "IMAGE_DIGIT_5",
                 "type": "png"
             },
             {
@@ -78,23 +78,23 @@
                 "type": "font"
             },
             {
-                "file": "images/digit_1.png",
-                "name": "IMAGE_DIGIT_1",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_5.png",
-                "name": "IMAGE_DIGIT_5",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_8.png",
-                "name": "IMAGE_DIGIT_8",
-                "type": "png"
-            },
-            {
                 "file": "images/digit_9.png",
                 "name": "IMAGE_DIGIT_9",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_4.png",
+                "name": "IMAGE_DIGIT_4",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_6.png",
+                "name": "IMAGE_DIGIT_6",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_3.png",
+                "name": "IMAGE_DIGIT_3",
                 "type": "png"
             }
         ]
