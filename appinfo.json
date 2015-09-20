@@ -12,6 +12,51 @@
     "resources": {
         "media": [
             {
+                "file": "images/w_unknown.png",
+                "name": "W_UNKNOWN",
+                "type": "png"
+            },
+            {
+                "file": "images/w_thunder.png",
+                "name": "W_THUNDER",
+                "type": "png"
+            },
+            {
+                "file": "images/w_snow.png",
+                "name": "W_SNOW",
+                "type": "png"
+            },
+            {
+                "file": "images/w_rain.png",
+                "name": "W_RAIN",
+                "type": "png"
+            },
+            {
+                "file": "images/w_fog.png",
+                "name": "W_FOG",
+                "type": "png"
+            },
+            {
+                "file": "images/w_cloudy.png",
+                "name": "W_CLOUDY",
+                "type": "png"
+            },
+            {
+                "file": "images/w_clearn.png",
+                "name": "W_CLEARN",
+                "type": "png"
+            },
+            {
+                "file": "images/w_cleard.png",
+                "name": "W_CLEARD",
+                "type": "png"
+            },
+            {
+                "file": "images/w_blank.png",
+                "name": "W_BLANK",
+                "type": "png"
+            },
+            {
                 "file": "images/noon.png",
                 "name": "IMAGE_NOON",
                 "type": "png"

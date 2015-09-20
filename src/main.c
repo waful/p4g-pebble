@@ -19,10 +19,14 @@ static BitmapLayer *s_time_digit_2_layer;
 static BitmapLayer *s_time_digit_3_layer;
 static BitmapLayer *s_time_digit_4_layer;
 static BitmapLayer *s_time_of_day_layer;
+static BitmapLayer *s_weather_icon_layer;
 
 static GBitmap *s_background_bitmap;
 static GBitmap *s_digit_array[10];
 static GBitmap *s_time_of_day_array[5];
+static GBitmap *s_weather_icon;
+
+static uint32_t s_weather_icon_array[9];
 
 static void render_digit(BitmapLayer *layer, uint8_t digit){
     // get the right bitmap
@@ -55,7 +59,6 @@ static void render_day_of_week(uint8_t day_of_week){
             break;
     }
 }
-
 
 static void render_time_of_day(char time_buffer[]){
     // hour
@@ -108,7 +111,8 @@ static void render_date(char date_buffer[]){
     if(date_buffer[4] != old_date[4]){
         render_day_of_week(date_buffer[4] - '0');
     }
-    memcpy(old_date, date_buffer, sizeof(old_date));}
+    memcpy(old_date, date_buffer, sizeof(old_date));
+}
 
 static void render_time() {
     time_t temp = time(NULL); 
@@ -145,11 +149,15 @@ static void render_time() {
     memcpy(old_time, time_buffer, sizeof(old_time));
 }
 
-static void update_temp(uint8_t condition){
-    
+static void render_weather(uint8_t condition){
+    if(s_weather_icon != NULL){
+        gbitmap_destroy(s_weather_icon);
+    }
+    s_weather_icon = gbitmap_create_with_resource(s_weather_icon_array[condition]);
+    bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon);
 }
 
-static void update_background(){
+static void render_background(){
     bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
 }
 
@@ -187,6 +195,11 @@ static void setup_layers(Window *window){
     text_layer_set_background_color(s_day_of_week_layer, GColorClear);
     text_layer_set_text_color(s_day_of_week_layer, GColorOrange);
     layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_of_week_layer));
+    
+    // set up weather icon
+    s_weather_icon_layer = bitmap_layer_create(GRect(62, 74, 58, 58));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_weather_icon_layer));
+    bitmap_layer_set_compositing_mode(s_weather_icon_layer, GCompOpSet);
 }
 
 static void setup_bitmaps(){
@@ -208,7 +221,7 @@ static void setup_bitmaps(){
     };
     memcpy(s_digit_array, tmp_digit_array, sizeof(s_digit_array));
     
-    // set up tiem of day array
+    // set up time of day array
     GBitmap *tmp_time_of_day_array[5] = {
         gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAYTIME),
         gbitmap_create_with_resource(RESOURCE_ID_IMAGE_EVENING),
@@ -217,6 +230,22 @@ static void setup_bitmaps(){
         gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NOON)
     };
     memcpy(s_time_of_day_array, tmp_time_of_day_array, sizeof(s_time_of_day_array));
+}
+
+static void setup_bitmap_reference_arrays(){
+    // set up time of day array
+    uint32_t tmp_weather_icon_array[9] = {
+        RESOURCE_ID_W_CLEARD,
+        RESOURCE_ID_W_CLEARN,
+        RESOURCE_ID_W_CLOUDY,
+        RESOURCE_ID_W_RAIN,
+        RESOURCE_ID_W_SNOW,
+        RESOURCE_ID_W_THUNDER,
+        RESOURCE_ID_W_FOG,
+        RESOURCE_ID_W_BLANK,
+        RESOURCE_ID_W_UNKNOWN
+    };
+    memcpy(s_weather_icon_array, tmp_weather_icon_array, sizeof(s_weather_icon_array));
 }
 
 static void setup_texts_and_fonts(){
@@ -230,10 +259,11 @@ static void main_window_load(Window *window) {
     setup_layers(window);
     setup_bitmaps();
     setup_texts_and_fonts();
+    setup_bitmap_reference_arrays();
     
-    update_background();
+    render_background();
     render_time();
-    update_temp(-1);
+    render_weather(8);
 }
 
 static void main_window_unload(Window *window) {
@@ -249,6 +279,7 @@ static void main_window_unload(Window *window) {
     for(i = 0; i < sizeof(s_time_of_day_array)/sizeof(s_time_of_day_array[0]); i++){
         gbitmap_destroy(s_time_of_day_array[i]);
     }
+    gbitmap_destroy(s_weather_icon);
 
     // destroy layers
     bitmap_layer_destroy(s_background_layer);
@@ -261,28 +292,24 @@ static void main_window_unload(Window *window) {
     bitmap_layer_destroy(s_time_digit_3_layer);
     bitmap_layer_destroy(s_time_digit_4_layer);
     bitmap_layer_destroy(s_time_of_day_layer);
+    bitmap_layer_destroy(s_weather_icon_layer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     render_time();
     
-    // Get weather update every 30 minutes
-    if(tick_time->tm_min % 30 == 0) {
-        // Begin dictionary
+    if(tick_time->tm_min % 15 == 0) {
+        // send junk message to start weather fetch
         DictionaryIterator *iter;
         app_message_outbox_begin(&iter);
-
-        // Add a key-value pair
         dict_write_uint8(iter, 0, 0);
-
-        // Send the message!
         app_message_outbox_send();
     }
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
     // store incoming information
-    uint8_t tmp_condition;
+    uint8_t tmp_condition = 9;
 
     // iterate through payload
     Tuple *t;
@@ -297,7 +324,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
     }
     
-    update_temp(tmp_condition);
+    render_weather(tmp_condition);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {

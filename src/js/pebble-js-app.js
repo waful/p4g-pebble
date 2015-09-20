@@ -6,8 +6,8 @@ var CONDITION_KEY = {
     snow: 4,
     thunder: 5,
     fog: 6,
-    unknown: 9
-    
+    blank: 7,
+    unknown: 8
 }
 
 var xhrRequest = function (url, type, callback) {
@@ -71,10 +71,10 @@ function locationSuccess(pos) {
 
             Pebble.sendAppMessage(dictionary,
                 function () {
-                    console.log("sent: " + JSON.toString(dictionary));
+                    console.log("sent: " + JSON.stringify(dictionary));
                 },
                 function () {
-                    console.log("error in sending: " + JSON.toString(dictionary));
+                    console.log("error in sending: " + JSON.stringify(dictionary));
                 }
             );
         }
