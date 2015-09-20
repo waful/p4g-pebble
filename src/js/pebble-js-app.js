@@ -1,71 +1,98 @@
+var CONDITION_KEY = {
+    clear_day: 0,
+    clear_night: 1,
+    cloudy: 2,
+    rain: 3,
+    snow: 4,
+    thunder: 5,
+    fog: 6,
+    unknown: 9
+    
+}
+
 var xhrRequest = function (url, type, callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.onload = function () {
-    callback(this.responseText);
-  };
-  xhr.open(type, url);
-  xhr.send();
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+        callback(this.responseText);
+    };
+    xhr.open(type, url);
+    xhr.send();
 };
 
 function locationSuccess(pos) {
-  // Construct URL
-  var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
-      pos.coords.latitude + "&lon=" + pos.coords.longitude;
+    var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
+        pos.coords.latitude + "&lon=" + pos.coords.longitude;
 
-  // Send request to OpenWeatherMap
-  xhrRequest(url, 'GET', 
-    function(responseText) {
-      // responseText contains a JSON object with weather info
-      var json = JSON.parse(responseText);
+    xhrRequest(url, 'GET',
+        function (responseText) {
+            var json = JSON.parse(responseText);
 
-      // Conditions
-      var conditions = json.weather[0].main;      
-      console.log("Conditions are " + conditions);
-      
-      // Assemble dictionary using our keys
-      var dictionary = {
-        "KEY_CONDITIONS": conditions
-      };
+            var iconKey = json.weather[0].icon;
+            var conditions;
+            switch(iconKey){
+                case '01d':
+                    conditions = CONDITION_KEY.clear_day;
+                    break;
+                case '01n':
+                    conditions = CONDITION_KEY.clear_night;
+                    break;
+                case '03d':
+                case '03n':
+                case '04d':
+                case '04n':
+                    conditions = CONDITION_KEY.cloudy;
+                    break;
+                case '09d':
+                case '09n':
+                case '10d':
+                case '10n':
+                    conditions = CONDITION_KEY.rain;
+                    break;
+                case '11d':
+                case '11n':
+                    conditions = CONDITION_KEY.thunder;
+                    break;
+                case '13d':
+                case '13n':
+                    conditions = CONDITION_KEY.snow;
+                    break;
+                case '50d':
+                case '50n':
+                    conditions = CONDITION_KEY.fog;
+                    break;
+                default:
+                    conditions = CONDITION_KEY.unknown;
+                    break;
+            }
 
-      // Send to Pebble
-      Pebble.sendAppMessage(dictionary,
-        function(e) {
-          console.log("Weather info sent to Pebble successfully!");
-        },
-        function(e) {
-          console.log("Error sending weather info to Pebble!");
+            var dictionary = {
+                "KEY_CONDITIONS": conditions
+            };
+
+            Pebble.sendAppMessage(dictionary,
+                function () {
+                    console.log("sent: " + JSON.toString(dictionary));
+                },
+                function () {
+                    console.log("error in sending: " + JSON.toString(dictionary));
+                }
+            );
         }
-      );
-    }      
-  );
+    );
 }
 
 function locationError(err) {
-  console.log("Error requesting location!");
+    console.log("could not get location");
 }
 
 function getWeather() {
-  navigator.geolocation.getCurrentPosition(
-    locationSuccess,
-    locationError,
-    {timeout: 15000, maximumAge: 60000}
-  );
+    navigator.geolocation.getCurrentPosition(
+        locationSuccess,
+        locationError,
+        {timeout: 15000, maximumAge: 60000}
+    );
 }
 
-// Listen for when the watchface is opened
-Pebble.addEventListener('ready', 
-  function(e) {
-    console.log("PebbleKit JS ready!");
+Pebble.addEventListener('ready', getWeather());
 
-    // Get the initial weather
-    getWeather();
-  }
-);
-
-// Listen for when an AppMessage is received
-Pebble.addEventListener('appmessage',
-  function(e) {
-    console.log("AppMessage received!");
-    getWeather();
-  }                     
-);
+Pebble.addEventListener('appmessage', getWeather());

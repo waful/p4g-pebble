@@ -24,13 +24,13 @@ static GBitmap *s_background_bitmap;
 static GBitmap *s_digit_array[10];
 static GBitmap *s_time_of_day_array[5];
 
-static void render_digit_layer_with_bitmap(BitmapLayer *layer, uint8_t digit){
+static void render_digit(BitmapLayer *layer, uint8_t digit){
     // get the right bitmap
     GBitmap *b_digit = s_digit_array[digit];
     bitmap_layer_set_bitmap(layer, b_digit);
 }
 
-static void render_day_of_week_layer(uint8_t day_of_week){
+static void render_day_of_week(uint8_t day_of_week){
     switch(day_of_week){
         case 1:
             text_layer_set_text(s_day_of_week_layer, "MON");
@@ -56,36 +56,10 @@ static void render_day_of_week_layer(uint8_t day_of_week){
     }
 }
 
-static void update_time() {
-    time_t temp = time(NULL); 
-    struct tm *tick_time = localtime(&temp);
-    static char old_time[] = "------";
-    static char old_date[] = "-----";
-    static uint8_t old_hour = 99;
 
-    char time_buffer[] = "0000  ";
-    char date_buffer[] = "00000";
-    if(clock_is_24h_style() == true) {
-        strftime(time_buffer, sizeof(time_buffer), "%H%M  ", tick_time);
-    } else {
-        strftime(time_buffer, sizeof(time_buffer), "%I%M%P", tick_time);
-    }
-    strftime(date_buffer, sizeof(date_buffer), "%m%d%w", tick_time);
-    
-    if(time_buffer[0] != old_time[0]){
-        render_digit_layer_with_bitmap(s_time_digit_1_layer, time_buffer[0] - '0');
-    }
-    if(time_buffer[1] != old_time[1]){
-        render_digit_layer_with_bitmap(s_time_digit_2_layer, time_buffer[1] - '0');
-    }
-    if(time_buffer[2] != old_time[2]){
-        render_digit_layer_with_bitmap(s_time_digit_3_layer, time_buffer[2] - '0');
-    }
-    if(time_buffer[3] != old_time[3]){
-        render_digit_layer_with_bitmap(s_time_digit_4_layer, time_buffer[3] - '0');
-    }
-    memcpy(old_time, time_buffer, sizeof(old_time));
-    
+static void render_time_of_day(char time_buffer[]){
+    // hour
+    static uint8_t old_hour = 99;
     uint8_t hour_buffer = (time_buffer[0] - '0') * 10 + (time_buffer[1] - '0');
     if(hour_buffer != old_hour){
         // morning
@@ -113,25 +87,62 @@ static void update_time() {
         }
     }
     old_hour = hour_buffer;
-    
-    
+}
+
+static void render_date(char date_buffer[]){
+    // date
+    static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
-        render_digit_layer_with_bitmap(s_date_digit_1_layer, date_buffer[0] - '0');
+        render_digit(s_date_digit_1_layer, date_buffer[0] - '0');
     }
     if(date_buffer[1] != old_date[1]){
-        render_digit_layer_with_bitmap(s_date_digit_2_layer, date_buffer[1] - '0');
+        render_digit(s_date_digit_2_layer, date_buffer[1] - '0');
     }
     if(date_buffer[2] != old_date[2]){
-        render_digit_layer_with_bitmap(s_date_digit_3_layer, date_buffer[2] - '0');
+        render_digit(s_date_digit_3_layer, date_buffer[2] - '0');
     }
     if(date_buffer[3] != old_date[3]){
-        render_digit_layer_with_bitmap(s_date_digit_4_layer, date_buffer[3] - '0');
+        render_digit(s_date_digit_4_layer, date_buffer[3] - '0');
     }
     if(date_buffer[4] != old_date[4]){
-        render_day_of_week_layer(date_buffer[4] - '0');
+        render_day_of_week(date_buffer[4] - '0');
     }
-    memcpy(old_date, date_buffer, sizeof(old_date));
+    memcpy(old_date, date_buffer, sizeof(old_date));}
+
+static void render_time() {
+    time_t temp = time(NULL); 
+    struct tm *tick_time = localtime(&temp);
+
+    static char old_time[] = "------";
+    char time_buffer[] = "0000  ";
+    if(clock_is_24h_style() == true) {
+        strftime(time_buffer, sizeof(time_buffer), "%H%M  ", tick_time);
+    } else {
+        strftime(time_buffer, sizeof(time_buffer), "%I%M%p", tick_time);
+    }
+    
+    if(time_buffer[0] != old_time[0]){
+        render_digit(s_time_digit_1_layer, time_buffer[0] - '0');
+    }
+    if(time_buffer[1] != old_time[1]){
+        render_digit(s_time_digit_2_layer, time_buffer[1] - '0');
+        
+        // hour changed, check time of day
+        render_time_of_day(time_buffer);
+        
+        // check date too
+        char date_buffer[] = "00000";
+        strftime(date_buffer, sizeof(date_buffer), "%m%d%w", tick_time);
+        render_date(date_buffer);
+    }
+    if(time_buffer[2] != old_time[2]){
+        render_digit(s_time_digit_3_layer, time_buffer[2] - '0');
+    }
+    if(time_buffer[3] != old_time[3]){
+        render_digit(s_time_digit_4_layer, time_buffer[3] - '0');
+    }
+    memcpy(old_time, time_buffer, sizeof(old_time));
 }
 
 static void update_temp(uint8_t condition){
@@ -197,7 +208,7 @@ static void setup_bitmaps(){
     };
     memcpy(s_digit_array, tmp_digit_array, sizeof(s_digit_array));
     
-    // set up digits array
+    // set up tiem of day array
     GBitmap *tmp_time_of_day_array[5] = {
         gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAYTIME),
         gbitmap_create_with_resource(RESOURCE_ID_IMAGE_EVENING),
@@ -221,7 +232,7 @@ static void main_window_load(Window *window) {
     setup_texts_and_fonts();
     
     update_background();
-    update_time();
+    render_time();
     update_temp(-1);
 }
 
@@ -253,7 +264,7 @@ static void main_window_unload(Window *window) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-    update_time();
+    render_time();
     
     // Get weather update every 30 minutes
     if(tick_time->tm_min % 30 == 0) {
