@@ -78,18 +78,24 @@ function getWeather() {
     var lastFetchDate = Date.parse(localStorage.getItem("last_fetch_date"));
     var lastFetchConditions = Number.parseInt(localStorage.getItem("last_fetch_conditions"));
     if(lastFetchDate
-       && lastFetchConditions >= 0
-       && new Date() - lastFetchDate < 900000){
+       && lastFetchConditions >= 0){
         console.log("using cached conditions: " + lastFetchConditions + " " + localStorage.getItem("last_fetch_details"));
         sendToApp(lastFetchConditions);
+        if(new Date() - lastFetchDate >= 900000){
+            getNewWeather();
+        }
     }
     else{
-        navigator.geolocation.getCurrentPosition(
-            locationSuccess,
-            locationError,
-            {timeout: 5000, maximumAge: 0}
-        );
+        getNewWeather();
     }
+}
+
+function getNewWeather(){
+    navigator.geolocation.getCurrentPosition(
+        locationSuccess,
+        locationError,
+        {timeout: 5000, maximumAge: 0}
+    );
 }
 
 function sendToApp(conditions){
