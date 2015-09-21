@@ -8,14 +8,8 @@ static TextLayer *s_day_of_week_layer;
 static GFont s_day_of_week_font;
 
 static BitmapLayer *s_background_layer;
-static BitmapLayer *s_date_digit_1_layer;
-static BitmapLayer *s_date_digit_2_layer;
-static BitmapLayer *s_date_digit_3_layer;
-static BitmapLayer *s_date_digit_4_layer;
-static BitmapLayer *s_time_digit_1_layer;
-static BitmapLayer *s_time_digit_2_layer;
-static BitmapLayer *s_time_digit_3_layer;
-static BitmapLayer *s_time_digit_4_layer;
+static BitmapLayer *s_date_digit_layer_array[4];
+static BitmapLayer *s_time_digit_layer_array[4];
 static BitmapLayer *s_time_of_day_layer;
 static BitmapLayer *s_weather_icon_layer;
 
@@ -117,16 +111,16 @@ static void render_date(char date_buffer[]){
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
-        render_digit(s_date_digit_1_layer, &s_date_digit_1_bitmap, date_buffer[0] - '0');
+        render_digit(s_date_digit_layer_array[0], &s_date_digit_1_bitmap, date_buffer[0] - '0');
     }
     if(date_buffer[1] != old_date[1]){
-        render_digit(s_date_digit_2_layer, &s_date_digit_2_bitmap, date_buffer[1] - '0');
+        render_digit(s_date_digit_layer_array[1], &s_date_digit_2_bitmap, date_buffer[1] - '0');
     }
     if(date_buffer[2] != old_date[2]){
-        render_digit(s_date_digit_3_layer, &s_date_digit_3_bitmap, date_buffer[2] - '0');
+        render_digit(s_date_digit_layer_array[2], &s_date_digit_3_bitmap, date_buffer[2] - '0');
     }
     if(date_buffer[3] != old_date[3]){
-        render_digit(s_date_digit_4_layer, &s_date_digit_4_bitmap, date_buffer[3] - '0');
+        render_digit(s_date_digit_layer_array[3], &s_date_digit_4_bitmap, date_buffer[3] - '0');
     }
     if(date_buffer[4] != old_date[4]){
         render_day_of_week(date_buffer[4] - '0');
@@ -147,10 +141,10 @@ static void render_time() {
     }
     
     if(time_buffer[0] != old_time[0]){
-        render_digit(s_time_digit_1_layer, &s_time_digit_1_bitmap, time_buffer[0] - '0');
+        render_digit(s_time_digit_layer_array[0], &s_time_digit_1_bitmap, time_buffer[0] - '0');
     }
     if(time_buffer[1] != old_time[1]){
-        render_digit(s_time_digit_2_layer, &s_time_digit_2_bitmap, time_buffer[1] - '0');
+        render_digit(s_time_digit_layer_array[1], &s_time_digit_2_bitmap, time_buffer[1] - '0');
         
         // hour changed, check time of day
         render_time_of_day(time_buffer);
@@ -161,10 +155,10 @@ static void render_time() {
         render_date(date_buffer);
     }
     if(time_buffer[2] != old_time[2]){
-        render_digit(s_time_digit_3_layer, &s_time_digit_3_bitmap, time_buffer[2] - '0');
+        render_digit(s_time_digit_layer_array[2], &s_time_digit_3_bitmap, time_buffer[2] - '0');
     }
     if(time_buffer[3] != old_time[3]){
-        render_digit(s_time_digit_4_layer, &s_time_digit_4_bitmap, time_buffer[3] - '0');
+        render_digit(s_time_digit_layer_array[3], &s_time_digit_4_bitmap, time_buffer[3] - '0');
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
 }
@@ -187,24 +181,24 @@ static void setup_layers(Window *window){
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_background_layer));
     
     // set up date digit
-    s_date_digit_1_layer = bitmap_layer_create(GRect(5, 13, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_1_layer));
-    s_date_digit_2_layer = bitmap_layer_create(GRect(22, 13, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_2_layer));
-    s_date_digit_3_layer = bitmap_layer_create(GRect(51, 13, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_3_layer));
-    s_date_digit_4_layer = bitmap_layer_create(GRect(68, 13, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_4_layer));
+    s_date_digit_layer_array[0] = bitmap_layer_create(GRect(5, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_layer_array[0]));
+    s_date_digit_layer_array[1] = bitmap_layer_create(GRect(22, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_layer_array[1]));
+    s_date_digit_layer_array[2] = bitmap_layer_create(GRect(51, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_layer_array[2]));
+    s_date_digit_layer_array[3] = bitmap_layer_create(GRect(68, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_layer_array[3]));
     
     // set up time
-    s_time_digit_1_layer = bitmap_layer_create(GRect(63, 144, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_1_layer));
-    s_time_digit_2_layer = bitmap_layer_create(GRect(80, 144, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_2_layer));
-    s_time_digit_3_layer = bitmap_layer_create(GRect(105, 144, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_3_layer));
-    s_time_digit_4_layer = bitmap_layer_create(GRect(122, 144, 17, 16));
-    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_4_layer));
+    s_time_digit_layer_array[0] = bitmap_layer_create(GRect(5, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[0]));
+    s_time_digit_layer_array[1] = bitmap_layer_create(GRect(22, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[1]));
+    s_time_digit_layer_array[2] = bitmap_layer_create(GRect(51, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[2]));
+    s_time_digit_layer_array[3] = bitmap_layer_create(GRect(68, 13, 17, 16));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[3]));
     s_time_of_day_layer = bitmap_layer_create(GRect(5, 37, 75, 25));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_of_day_layer));
     bitmap_layer_set_compositing_mode(s_time_of_day_layer, GCompOpSet);
@@ -305,14 +299,13 @@ static void main_window_unload(Window *window) {
 
     // destroy layers
     bitmap_layer_destroy(s_background_layer);
-    bitmap_layer_destroy(s_date_digit_1_layer);
-    bitmap_layer_destroy(s_date_digit_2_layer);
-    bitmap_layer_destroy(s_date_digit_3_layer);
-    bitmap_layer_destroy(s_date_digit_4_layer);
-    bitmap_layer_destroy(s_time_digit_1_layer);
-    bitmap_layer_destroy(s_time_digit_2_layer);
-    bitmap_layer_destroy(s_time_digit_3_layer);
-    bitmap_layer_destroy(s_time_digit_4_layer);
+    uint8_t i;
+    for(i = 0; i < sizeof(s_date_digit_layer_array)/sizeof(s_date_digit_layer_array[0]); i++){
+        bitmap_layer_destroy(s_date_digit_layer_array[i]);
+    }
+    for(i = 0; i < sizeof(s_time_digit_layer_array)/sizeof(s_time_digit_layer_array[0]); i++){
+        bitmap_layer_destroy(s_time_digit_layer_array[i]);
+    }
     bitmap_layer_destroy(s_time_of_day_layer);
     bitmap_layer_destroy(s_weather_icon_layer);
     APP_LOG(APP_LOG_LEVEL_INFO, "destroyed bitmap layers");
