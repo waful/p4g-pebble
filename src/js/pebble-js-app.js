@@ -67,19 +67,9 @@ function locationSuccess(pos) {
                     conditions = CONDITION_KEY.unknown;
                     break;
             }
-
-            var dictionary = {
-                "KEY_CONDITIONS": conditions
-            };
-
-            Pebble.sendAppMessage(dictionary,
-                function () {
-                    console.log("sent: " + JSON.stringify(dictionary));
-                },
-                function () {
-                    console.log("error in sending: " + JSON.stringify(dictionary));
-                }
-            );
+            localStorage.setItem("last_fetch_date", new Date());
+            localStorage.setItem("last_fetch_conditions", conditions);
+            sendToApp(conditions);
         }
     );
 }
@@ -89,11 +79,37 @@ function locationError(err) {
 }
 
 function getWeather() {
-    navigator.geolocation.getCurrentPosition(
-        locationSuccess,
-        locationError,
-        {timeout: 5000, maximumAge: 0}
-    );
+    // use cache if last fetch is younger than 15 minutes
+    var lastFetchDate = Date.parse(localStorage.getItem("last_fetch_date"));
+    var lastFetchConditions = localStorage.getItem("last_fetch_conditions");
+    if(lastFetchDate
+       && lastFetchConditions
+       && new Date() - lastFetchDate < 900000){
+        console.log("using cached conditions: " + localStorage.getItem("last_fetch_conditions"));
+        sendToApp(localStorage.getItem("last_fetch_conditions"));
+    }
+    else{
+        navigator.geolocation.getCurrentPosition(
+            locationSuccess,
+            locationError,
+            {timeout: 5000, maximumAge: 0}
+        );
+    }
+}
+
+function sendToApp(conditions){
+    var dictionary = {
+        "KEY_CONDITIONS": conditions
+    };
+
+    Pebble.sendAppMessage(dictionary,
+                          function () {
+                              console.log("sent: " + JSON.stringify(dictionary));
+                          },
+                          function () {
+                              console.log("error in sending: " + JSON.stringify(dictionary));
+                          }
+                         );
 }
 
 Pebble.addEventListener('ready', getWeather);

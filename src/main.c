@@ -29,6 +29,7 @@ static uint32_t s_weather_icon_array[9];
 static uint8_t current_hour = 99;
 
 static void battery_callback(BatteryChargeState state) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of battery callback");
     static bool first_call = true;
     static uint8_t battery_level = 0;
     battery_level = state.charge_percent;
@@ -42,9 +43,11 @@ static void battery_callback(BatteryChargeState state) {
         text_layer_set_text_color(s_day_of_week_layer, GColorOrange);
     }
     first_call = false;
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of battery callback");
 }
 
 static void bluetooth_callback(bool connected) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of bluetooth callback");
     static bool first_call = true;
     if(s_bluetooth_status_bitmap != NULL){
         gbitmap_destroy(s_bluetooth_status_bitmap);
@@ -63,9 +66,11 @@ static void bluetooth_callback(bool connected) {
     }
     bitmap_layer_set_bitmap(s_bluetooth_status_layer, s_bluetooth_status_bitmap);
     first_call = false;
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of battery callback");
 }
 
 static void render_digit(BitmapLayer *layer, GBitmap **bitmap, uint8_t digit){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render digit");
     GBitmap *local_bitmap = *bitmap;
     if(local_bitmap != NULL){
         gbitmap_destroy(local_bitmap);
@@ -73,9 +78,11 @@ static void render_digit(BitmapLayer *layer, GBitmap **bitmap, uint8_t digit){
     local_bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
     bitmap_layer_set_bitmap(layer, local_bitmap);
     *bitmap = local_bitmap;
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render digit");
 }
 
 static void render_day_of_week(uint8_t day_of_week){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render day of week");
     switch(day_of_week){
         case 1:
             text_layer_set_text(s_day_of_week_layer, "MON");
@@ -99,9 +106,11 @@ static void render_day_of_week(uint8_t day_of_week){
             text_layer_set_text(s_day_of_week_layer, "SUN");
             break;
     }
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render day of week");
 }
 
 static void render_time_of_day(uint8_t the_24h_hour){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render time of day");
     uint32_t res_id;
 
     // morning 5-8
@@ -131,9 +140,11 @@ static void render_time_of_day(uint8_t the_24h_hour){
     s_time_of_day_bitmap = gbitmap_create_with_resource(res_id);
 
     bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_bitmap);
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render time of day");
 }
 
 static void render_date(char date_buffer[]){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render date");
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
@@ -152,9 +163,11 @@ static void render_date(char date_buffer[]){
         render_day_of_week(date_buffer[4] - '0');
     }
     memcpy(old_date, date_buffer, sizeof(old_date));
+    APP_LOG(APP_LOG_LEVEL_INFO, "ed of render date");
 }
 
 static void render_time() {
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render time");
     time_t temp = time(NULL); 
     struct tm *tick_time = localtime(&temp);
 
@@ -193,9 +206,11 @@ static void render_time() {
         render_digit(s_time_digit_layer_array[3], &s_time_digit_bitmap_array[3], time_buffer[3] - '0');
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render time");
 }
 
 static void render_weather(uint8_t condition){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather");
     if(s_weather_icon_bitmap != NULL){
         gbitmap_destroy(s_weather_icon_bitmap);
     }
@@ -204,11 +219,18 @@ static void render_weather(uint8_t condition){
             condition = 1;
         }
     }
+    if(condition == 1){
+        if(current_hour >= 5 && current_hour <= 21){
+            condition = 0;
+        }
+    }
     s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
     bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
 }
 
 static void render_background(){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render background");
     static uint8_t last_shown = 9;
     uint8_t next_shown = 9;
     while(next_shown == last_shown){
@@ -219,6 +241,7 @@ static void render_background(){
     }
     s_background_bitmap = gbitmap_create_with_resource(s_backgrounds_array[next_shown]);
     bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render background");
 }
 
 static void setup_layers(Window *window){
@@ -377,13 +400,11 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
         render_background();
     }
     
-    if(tick_time->tm_min % 15 == 0 && tick_time->tm_sec == 0) {
-        // send junk message to start weather fetch
-        DictionaryIterator *iter;
-        app_message_outbox_begin(&iter);
-        dict_write_uint8(iter, 0, 0);
-        app_message_outbox_send();
-    }
+    // try to get weather
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+    dict_write_uint8(iter, 0, 0);
+    app_message_outbox_send();
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
