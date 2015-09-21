@@ -191,13 +191,13 @@ static void setup_layers(Window *window){
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_date_digit_layer_array[3]));
     
     // set up time
-    s_time_digit_layer_array[0] = bitmap_layer_create(GRect(5, 13, 17, 16));
+    s_time_digit_layer_array[0] = bitmap_layer_create(GRect(63, 144, 17, 16));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[0]));
-    s_time_digit_layer_array[1] = bitmap_layer_create(GRect(22, 13, 17, 16));
+    s_time_digit_layer_array[1] = bitmap_layer_create(GRect(80, 144, 17, 16));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[1]));
-    s_time_digit_layer_array[2] = bitmap_layer_create(GRect(51, 13, 17, 16));
+    s_time_digit_layer_array[2] = bitmap_layer_create(GRect(105, 144, 17, 16));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[2]));
-    s_time_digit_layer_array[3] = bitmap_layer_create(GRect(68, 13, 17, 16));
+    s_time_digit_layer_array[3] = bitmap_layer_create(GRect(122, 144, 17, 16));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_digit_layer_array[3]));
     s_time_of_day_layer = bitmap_layer_create(GRect(5, 37, 75, 25));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_time_of_day_layer));
@@ -275,7 +275,7 @@ static void main_window_load(Window *window) {
     
     render_background();
     render_time();
-    render_weather(8);
+    render_weather(7);
 }
 
 static void main_window_unload(Window *window) {
