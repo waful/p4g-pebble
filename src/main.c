@@ -24,7 +24,7 @@ static GBitmap *s_time_digit_bitmap_array[4];
 static uint32_t s_backgrounds_array[7];
 static uint32_t s_digit_array[10];
 static uint32_t s_time_of_day_array[5];
-static uint32_t s_weather_icon_array[9];
+static uint32_t s_weather_icon_array[8];
 
 static uint8_t current_hour = 99;
 
@@ -49,34 +49,31 @@ static void battery_callback(BatteryChargeState state) {
 static void bluetooth_callback(bool connected) {
     APP_LOG(APP_LOG_LEVEL_INFO, "start of bluetooth callback");
     static bool first_call = true;
-    if(s_bluetooth_status_bitmap != NULL){
-        gbitmap_destroy(s_bluetooth_status_bitmap);
-    }
     if(connected){
         if(!first_call){
             vibes_long_pulse();
         }
-        s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_CLEAR);
+        
+        layer_set_hidden((Layer *)s_bluetooth_status_layer, true);
     }
     else{
         if(!first_call){
             vibes_double_pulse();
         }
-        s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_RED);  
+        layer_set_hidden((Layer *)s_bluetooth_status_layer, false);
     }
-    bitmap_layer_set_bitmap(s_bluetooth_status_layer, s_bluetooth_status_bitmap);
     first_call = false;
     APP_LOG(APP_LOG_LEVEL_INFO, "end of bluetooth callback");
 }
 
-static void render_digit(BitmapLayer *layer, GBitmap **bitmap, uint8_t digit){
-    APP_LOG(APP_LOG_LEVEL_INFO, "start of render digit");
+static void render_digit(BitmapLayer **layer, GBitmap **bitmap, uint8_t digit){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render digit: %d", digit);
     GBitmap *local_bitmap = *bitmap;
     if(local_bitmap != NULL){
         gbitmap_destroy(local_bitmap);
     }
     local_bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
-    bitmap_layer_set_bitmap(layer, local_bitmap);
+    bitmap_layer_set_bitmap(*layer, local_bitmap);
     *bitmap = local_bitmap;
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render digit");
 }
@@ -148,16 +145,16 @@ static void render_date(char date_buffer[]){
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
-        render_digit(s_date_digit_layer_array[0], &s_date_digit_bitmap_array[0], date_buffer[0] - '0');
+        render_digit(&s_date_digit_layer_array[0], &s_date_digit_bitmap_array[0], date_buffer[0] - '0');
     }
     if(date_buffer[1] != old_date[1]){
-        render_digit(s_date_digit_layer_array[1], &s_date_digit_bitmap_array[1], date_buffer[1] - '0');
+        render_digit(&s_date_digit_layer_array[1], &s_date_digit_bitmap_array[1], date_buffer[1] - '0');
     }
     if(date_buffer[2] != old_date[2]){
-        render_digit(s_date_digit_layer_array[2], &s_date_digit_bitmap_array[2], date_buffer[2] - '0');
+        render_digit(&s_date_digit_layer_array[2], &s_date_digit_bitmap_array[2], date_buffer[2] - '0');
     }
     if(date_buffer[3] != old_date[3]){
-        render_digit(s_date_digit_layer_array[3], &s_date_digit_bitmap_array[3], date_buffer[3] - '0');
+        render_digit(&s_date_digit_layer_array[3], &s_date_digit_bitmap_array[3], date_buffer[3] - '0');
     }
     if(date_buffer[4] != old_date[4]){
         render_day_of_week(date_buffer[4] - '0');
@@ -180,10 +177,10 @@ static void render_time() {
     }
     
     if(time_buffer[0] != old_time[0]){
-        render_digit(s_time_digit_layer_array[0], &s_time_digit_bitmap_array[0], time_buffer[0] - '0');
+        render_digit(&s_time_digit_layer_array[0], &s_time_digit_bitmap_array[0], time_buffer[0] - '0');
     }
     if(time_buffer[1] != old_time[1]){
-        render_digit(s_time_digit_layer_array[1], &s_time_digit_bitmap_array[1], time_buffer[1] - '0');
+        render_digit(&s_time_digit_layer_array[1], &s_time_digit_bitmap_array[1], time_buffer[1] - '0');
         
         // hour changed, get 24h hour and check time of day
         char the_24h_buffer[] = "00";
@@ -200,10 +197,10 @@ static void render_time() {
         render_date(date_buffer);
     }
     if(time_buffer[2] != old_time[2]){
-        render_digit(s_time_digit_layer_array[2], &s_time_digit_bitmap_array[2], time_buffer[2] - '0');
+        render_digit(&s_time_digit_layer_array[2], &s_time_digit_bitmap_array[2], time_buffer[2] - '0');
     }
     if(time_buffer[3] != old_time[3]){
-        render_digit(s_time_digit_layer_array[3], &s_time_digit_bitmap_array[3], time_buffer[3] - '0');
+        render_digit(&s_time_digit_layer_array[3], &s_time_digit_bitmap_array[3], time_buffer[3] - '0');
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render time");
@@ -211,21 +208,31 @@ static void render_time() {
 
 static void render_weather(uint8_t condition){
     APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather: %d", condition);
-    if(s_weather_icon_bitmap != NULL){
-        gbitmap_destroy(s_weather_icon_bitmap);
-    }
-    if(condition == 0){
-        if(current_hour >= 22 || current_hour <= 4){
-            condition = 1;
+    static uint8_t old_condition = 10;
+    if(condition != old_condition){
+        if(condition == 0){
+            if(current_hour >= 22 || current_hour <= 4){
+                condition = 1;
+            }
         }
-    }
-    if(condition == 1){
-        if(current_hour >= 5 && current_hour <= 21){
-            condition = 0;
+        if(condition == 1){
+            if(current_hour >= 5 && current_hour <= 21){
+                condition = 0;
+            }
         }
+        if(condition == 8){
+            layer_set_hidden((Layer *)s_weather_icon_layer, true);
+        }
+        else{
+            layer_set_hidden((Layer *)s_weather_icon_layer, false);
+            if(s_weather_icon_bitmap != NULL){
+                gbitmap_destroy(s_weather_icon_bitmap);
+            }
+            s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
+        }
+        bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
     }
-    s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
-    bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
+    old_condition = condition;
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
 }
 
@@ -287,6 +294,10 @@ static void setup_layers(Window *window){
     s_weather_icon_layer = bitmap_layer_create(GRect(62, 74, 58, 58));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_weather_icon_layer));
     bitmap_layer_set_compositing_mode(s_weather_icon_layer, GCompOpSet);
+    
+    // set up bluetooth indicator
+    s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_RED);
+    bitmap_layer_set_bitmap(s_bluetooth_status_layer, s_bluetooth_status_bitmap);
 }
 
 static void setup_bitmap_reference_arrays(){
@@ -313,7 +324,7 @@ static void setup_bitmap_reference_arrays(){
     memcpy(s_time_of_day_array, tmp_time_of_day_array, sizeof(s_time_of_day_array));
     
     // set up weather icon array
-    uint32_t tmp_weather_icon_array[9] = {
+    uint32_t tmp_weather_icon_array[8] = {
         RESOURCE_ID_W_CLEARD,
         RESOURCE_ID_W_CLEARN,
         RESOURCE_ID_W_CLOUDY,
@@ -321,7 +332,6 @@ static void setup_bitmap_reference_arrays(){
         RESOURCE_ID_W_SNOW,
         RESOURCE_ID_W_THUNDER,
         RESOURCE_ID_W_FOG,
-        RESOURCE_ID_W_BLANK,
         RESOURCE_ID_W_UNKNOWN
     };
     memcpy(s_weather_icon_array, tmp_weather_icon_array, sizeof(s_weather_icon_array));
@@ -355,7 +365,7 @@ static void main_window_load(Window *window) {
     
     render_background();
     render_time();
-    render_weather(7);
+    render_weather(8);
     battery_callback(battery_state_service_peek());
     bluetooth_callback(bluetooth_connection_service_peek());
 }

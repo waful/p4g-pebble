@@ -6,8 +6,8 @@ var CONDITION_KEY = {
     snow: 4,
     thunder: 5,
     fog: 6,
-    blank: 7,
-    unknown: 8
+    unknown: 7,
+    blank: 8
 }
 
 var xhrRequest = function (url, type, callback) {

@@ -17,11 +17,6 @@
                 "type": "png"
             },
             {
-                "file": "images/status_clear.png",
-                "name": "STATUS_CLEAR",
-                "type": "png"
-            },
-            {
                 "file": "images/status_red.png",
                 "name": "STATUS_RED",
                 "type": "png"
@@ -99,11 +94,6 @@
             {
                 "file": "images/w_cleard.png",
                 "name": "W_CLEARD",
-                "type": "png"
-            },
-            {
-                "file": "images/w_blank.png",
-                "name": "W_BLANK",
                 "type": "png"
             },
             {
