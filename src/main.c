@@ -26,31 +26,41 @@ static uint32_t s_digit_array[10];
 static uint32_t s_time_of_day_array[5];
 static uint32_t s_weather_icon_array[9];
 
-static uint8_t s_battery_level;
-
 static void battery_callback(BatteryChargeState state) {
-    s_battery_level = state.charge_percent;
-    if(s_battery_level < 20){
-        vibes_short_pulse();
+    static bool first_call = true;
+    static uint8_t battery_level = 0;
+    battery_level = state.charge_percent;
+    if(battery_level < 20){
+        if(!first_call){
+            vibes_short_pulse();
+        }
         text_layer_set_text_color(s_day_of_week_layer, GColorRed);
     }
     else{
         text_layer_set_text_color(s_day_of_week_layer, GColorOrange);
     }
+    first_call = false;
 }
+
 static void bluetooth_callback(bool connected) {
+    static bool first_call = true;
     if(s_bluetooth_status_bitmap != NULL){
         gbitmap_destroy(s_bluetooth_status_bitmap);
     }
     if(connected){
-        vibes_long_pulse();
+        if(!first_call){
+            vibes_long_pulse();
+        }
         s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_CLEAR);
     }
     else{
-        vibes_double_pulse();
+        if(!first_call){
+            vibes_double_pulse();
+        }
         s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_RED);  
     }
     bitmap_layer_set_bitmap(s_bluetooth_status_layer, s_bluetooth_status_bitmap);
+    first_call = false;
 }
 
 static void render_digit(BitmapLayer *layer, GBitmap **bitmap, uint8_t digit){
@@ -131,7 +141,6 @@ static void render_time_of_day(char time_buffer[]){
 }
 
 static void render_date(char date_buffer[]){
-    // date
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
