@@ -97,6 +97,6 @@ function getWeather() {
     );
 }
 
-Pebble.addEventListener('ready', getWeather());
+Pebble.addEventListener('ready', getWeather);
 
-Pebble.addEventListener('appmessage', getWeather());
+Pebble.addEventListener('appmessage', getWeather);

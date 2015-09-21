@@ -11,6 +11,51 @@
     "resources": {
         "media": [
             {
+                "file": "images/status_clear.png",
+                "name": "STATUS_CLEAR",
+                "type": "png"
+            },
+            {
+                "file": "images/status_red.png",
+                "name": "STATUS_RED",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_yukiko.png",
+                "name": "BG_YUKIKO",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_yu.png",
+                "name": "BG_YU",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_yosuke.png",
+                "name": "BG_YOSUKE",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_rise.png",
+                "name": "BG_RISE",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_naoto.png",
+                "name": "BG_NAOTO",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_kanji.png",
+                "name": "BG_KANJI",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_chie.png",
+                "name": "BG_CHIE",
+                "type": "png"
+            },
+            {
                 "file": "images/w_unknown.png",
                 "name": "W_UNKNOWN",
                 "type": "png"
@@ -103,11 +148,6 @@
             {
                 "file": "images/digit_1.png",
                 "name": "IMAGE_DIGIT_1",
-                "type": "png"
-            },
-            {
-                "file": "images/bg.png",
-                "name": "IMAGE_BACKGROUND",
                 "type": "png"
             },
             {

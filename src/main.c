@@ -8,26 +8,50 @@ static TextLayer *s_day_of_week_layer;
 static GFont s_day_of_week_font;
 
 static BitmapLayer *s_background_layer;
+static BitmapLayer *s_bluetooth_status_layer;
 static BitmapLayer *s_date_digit_layer_array[4];
 static BitmapLayer *s_time_digit_layer_array[4];
 static BitmapLayer *s_time_of_day_layer;
 static BitmapLayer *s_weather_icon_layer;
 
-static GBitmap *s_background_bitmap = NULL;
-static GBitmap *s_weather_icon = NULL;
-static GBitmap *s_time_of_day_bitmap = NULL;
-static GBitmap *s_date_digit_1_bitmap = NULL;
-static GBitmap *s_date_digit_2_bitmap = NULL;
-static GBitmap *s_date_digit_3_bitmap = NULL;
-static GBitmap *s_date_digit_4_bitmap = NULL;
-static GBitmap *s_time_digit_1_bitmap = NULL;
-static GBitmap *s_time_digit_2_bitmap = NULL;
-static GBitmap *s_time_digit_3_bitmap = NULL;
-static GBitmap *s_time_digit_4_bitmap = NULL;
+static GBitmap *s_background_bitmap;
+static GBitmap *s_bluetooth_status_bitmap;
+static GBitmap *s_weather_icon_bitmap;
+static GBitmap *s_time_of_day_bitmap;
+static GBitmap *s_date_digit_bitmap_array[4];
+static GBitmap *s_time_digit_bitmap_array[4];
 
+static uint32_t s_backgrounds_array[7];
 static uint32_t s_digit_array[10];
 static uint32_t s_time_of_day_array[5];
 static uint32_t s_weather_icon_array[9];
+
+static uint8_t s_battery_level;
+
+static void battery_callback(BatteryChargeState state) {
+    s_battery_level = state.charge_percent;
+    if(s_battery_level < 20){
+        vibes_short_pulse();
+        text_layer_set_text_color(s_day_of_week_layer, GColorRed);
+    }
+    else{
+        text_layer_set_text_color(s_day_of_week_layer, GColorOrange);
+    }
+}
+static void bluetooth_callback(bool connected) {
+    if(s_bluetooth_status_bitmap != NULL){
+        gbitmap_destroy(s_bluetooth_status_bitmap);
+    }
+    if(connected){
+        vibes_long_pulse();
+        s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_CLEAR);
+    }
+    else{
+        vibes_double_pulse();
+        s_bluetooth_status_bitmap = gbitmap_create_with_resource(RESOURCE_ID_STATUS_RED);  
+    }
+    bitmap_layer_set_bitmap(s_bluetooth_status_layer, s_bluetooth_status_bitmap);
+}
 
 static void render_digit(BitmapLayer *layer, GBitmap **bitmap, uint8_t digit){
     GBitmap *local_bitmap = *bitmap;
@@ -111,16 +135,16 @@ static void render_date(char date_buffer[]){
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
-        render_digit(s_date_digit_layer_array[0], &s_date_digit_1_bitmap, date_buffer[0] - '0');
+        render_digit(s_date_digit_layer_array[0], &s_date_digit_bitmap_array[0], date_buffer[0] - '0');
     }
     if(date_buffer[1] != old_date[1]){
-        render_digit(s_date_digit_layer_array[1], &s_date_digit_2_bitmap, date_buffer[1] - '0');
+        render_digit(s_date_digit_layer_array[1], &s_date_digit_bitmap_array[1], date_buffer[1] - '0');
     }
     if(date_buffer[2] != old_date[2]){
-        render_digit(s_date_digit_layer_array[2], &s_date_digit_3_bitmap, date_buffer[2] - '0');
+        render_digit(s_date_digit_layer_array[2], &s_date_digit_bitmap_array[2], date_buffer[2] - '0');
     }
     if(date_buffer[3] != old_date[3]){
-        render_digit(s_date_digit_layer_array[3], &s_date_digit_4_bitmap, date_buffer[3] - '0');
+        render_digit(s_date_digit_layer_array[3], &s_date_digit_bitmap_array[3], date_buffer[3] - '0');
     }
     if(date_buffer[4] != old_date[4]){
         render_day_of_week(date_buffer[4] - '0');
@@ -141,10 +165,10 @@ static void render_time() {
     }
     
     if(time_buffer[0] != old_time[0]){
-        render_digit(s_time_digit_layer_array[0], &s_time_digit_1_bitmap, time_buffer[0] - '0');
+        render_digit(s_time_digit_layer_array[0], &s_time_digit_bitmap_array[0], time_buffer[0] - '0');
     }
     if(time_buffer[1] != old_time[1]){
-        render_digit(s_time_digit_layer_array[1], &s_time_digit_2_bitmap, time_buffer[1] - '0');
+        render_digit(s_time_digit_layer_array[1], &s_time_digit_bitmap_array[1], time_buffer[1] - '0');
         
         // hour changed, check time of day
         render_time_of_day(time_buffer);
@@ -155,23 +179,32 @@ static void render_time() {
         render_date(date_buffer);
     }
     if(time_buffer[2] != old_time[2]){
-        render_digit(s_time_digit_layer_array[2], &s_time_digit_3_bitmap, time_buffer[2] - '0');
+        render_digit(s_time_digit_layer_array[2], &s_time_digit_bitmap_array[2], time_buffer[2] - '0');
     }
     if(time_buffer[3] != old_time[3]){
-        render_digit(s_time_digit_layer_array[3], &s_time_digit_4_bitmap, time_buffer[3] - '0');
+        render_digit(s_time_digit_layer_array[3], &s_time_digit_bitmap_array[3], time_buffer[3] - '0');
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
 }
 
 static void render_weather(uint8_t condition){
-    if(s_weather_icon != NULL){
-        gbitmap_destroy(s_weather_icon);
+    if(s_weather_icon_bitmap != NULL){
+        gbitmap_destroy(s_weather_icon_bitmap);
     }
-    s_weather_icon = gbitmap_create_with_resource(s_weather_icon_array[condition]);
-    bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon);
+    s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
+    bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
 }
 
 static void render_background(){
+    static uint8_t last_shown = 9;
+    uint8_t next_shown = 9;
+    while(next_shown == last_shown){
+        next_shown = rand() % 7;
+    }
+    if(s_background_bitmap != NULL){
+        gbitmap_destroy(s_background_bitmap);
+    }
+    s_background_bitmap = gbitmap_create_with_resource(s_backgrounds_array[next_shown]);
     bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
 }
 
@@ -179,6 +212,11 @@ static void setup_layers(Window *window){
     // set up background
     s_background_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
     layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_background_layer));
+    
+    // set up bluetooth status
+    s_bluetooth_status_layer = bitmap_layer_create(GRect(11, 143, 30, 18));
+    layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_bluetooth_status_layer));
+    bitmap_layer_set_compositing_mode(s_bluetooth_status_layer, GCompOpSet);
     
     // set up date digit
     s_date_digit_layer_array[0] = bitmap_layer_create(GRect(5, 13, 17, 16));
@@ -215,12 +253,19 @@ static void setup_layers(Window *window){
     bitmap_layer_set_compositing_mode(s_weather_icon_layer, GCompOpSet);
 }
 
-static void setup_bitmaps(){
-    // set up backgrounds
-    s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
-}
-
 static void setup_bitmap_reference_arrays(){
+    // set up backgrounds array
+    uint32_t tmp_backgrounds_array[7] = {
+        RESOURCE_ID_BG_YU,
+        RESOURCE_ID_BG_YUKIKO,
+        RESOURCE_ID_BG_CHIE,
+        RESOURCE_ID_BG_YOSUKE,
+        RESOURCE_ID_BG_KANJI,
+        RESOURCE_ID_BG_NAOTO,
+        RESOURCE_ID_BG_RISE
+    };
+    memcpy(s_backgrounds_array, tmp_backgrounds_array, sizeof(s_backgrounds_array));
+    
     // set up time of day array
     uint32_t tmp_time_of_day_array[5] = {
         RESOURCE_ID_IMAGE_DAYTIME,
@@ -269,37 +314,38 @@ static void setup_texts_and_fonts(){
 
 static void main_window_load(Window *window) {
     setup_layers(window);
-    setup_bitmaps();
     setup_texts_and_fonts();
     setup_bitmap_reference_arrays();
     
     render_background();
     render_time();
     render_weather(7);
+    battery_callback(battery_state_service_peek());
+    bluetooth_callback(bluetooth_connection_service_peek());
 }
 
 static void main_window_unload(Window *window) {
+    // iterator
+    uint8_t i;
+    
     // destroy texts and fonts
     text_layer_destroy(s_day_of_week_layer);
-    APP_LOG(APP_LOG_LEVEL_INFO, "destroyed text layers");
     
     // destroy bitmaps
     gbitmap_destroy(s_background_bitmap);
+    gbitmap_destroy(s_bluetooth_status_bitmap);
     gbitmap_destroy(s_time_of_day_bitmap);
-    gbitmap_destroy(s_weather_icon);
-    gbitmap_destroy(s_date_digit_1_bitmap);
-    gbitmap_destroy(s_date_digit_2_bitmap);
-    gbitmap_destroy(s_date_digit_3_bitmap);
-    gbitmap_destroy(s_date_digit_4_bitmap);
-    gbitmap_destroy(s_time_digit_1_bitmap);
-    gbitmap_destroy(s_time_digit_2_bitmap);
-    gbitmap_destroy(s_time_digit_3_bitmap);
-    gbitmap_destroy(s_time_digit_4_bitmap);
-    APP_LOG(APP_LOG_LEVEL_INFO, "destroyed bitmaps");
+    gbitmap_destroy(s_weather_icon_bitmap);
+    for(i = 0; i < sizeof(s_date_digit_bitmap_array)/sizeof(s_date_digit_bitmap_array[0]); i++){
+        gbitmap_destroy(s_date_digit_bitmap_array[i]);
+    }
+    for(i = 0; i < sizeof(s_time_digit_bitmap_array)/sizeof(s_time_digit_bitmap_array[0]); i++){
+        gbitmap_destroy(s_time_digit_bitmap_array[i]);
+    }
 
     // destroy layers
     bitmap_layer_destroy(s_background_layer);
-    uint8_t i;
+    bitmap_layer_destroy(s_bluetooth_status_layer);
     for(i = 0; i < sizeof(s_date_digit_layer_array)/sizeof(s_date_digit_layer_array[0]); i++){
         bitmap_layer_destroy(s_date_digit_layer_array[i]);
     }
@@ -308,13 +354,17 @@ static void main_window_unload(Window *window) {
     }
     bitmap_layer_destroy(s_time_of_day_layer);
     bitmap_layer_destroy(s_weather_icon_layer);
-    APP_LOG(APP_LOG_LEVEL_INFO, "destroyed bitmap layers");
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     render_time();
     
-    if(tick_time->tm_min % 15 == 0) {
+    if(tick_time->tm_min % 5 == 0 && tick_time->tm_sec == 0) {
+        // switch background every 5 minutes
+        render_background();
+    }
+    
+    if(tick_time->tm_min % 15 == 0 && tick_time->tm_sec == 0) {
         // send junk message to start weather fetch
         DictionaryIterator *iter;
         app_message_outbox_begin(&iter);
@@ -372,6 +422,8 @@ static void init() {
     app_message_register_inbox_dropped(inbox_dropped_callback);
     app_message_register_outbox_failed(outbox_failed_callback);
     app_message_register_outbox_sent(outbox_sent_callback);
+    battery_state_service_subscribe(battery_callback);
+    bluetooth_connection_service_subscribe(bluetooth_callback);
     
     // open appmessage
     app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
