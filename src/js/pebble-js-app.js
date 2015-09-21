@@ -1,6 +1,5 @@
 var CONDITION_KEY = {
-    clear_day: 0,
-    clear_night: 1,
+    clear: 0,
     cloudy: 2,
     rain: 3,
     snow: 4,
@@ -31,45 +30,40 @@ function locationSuccess(pos) {
             var json = JSON.parse(responseText);
             console.log("server says: " + JSON.stringify(json));
 
-            var iconKey = json.weather[0].icon;
+            var conditionId = parseInt(json.weather[0].id);
             var conditions;
-            switch(iconKey){
-                case '01d':
-                case '01n':
-                    conditions = CONDITION_KEY.clear_day;
-                    conditions = CONDITION_KEY.clear_night;
+            switch(parseInt(conditionId/100)){
+                case 8:
+                    if(conditionId === 800){
+                        conditions = CONDITION_KEY.clear;
+                    }
+                    else{
+                        conditions = CONDITION_KEY.cloudy;
+                    }
                     break;
-                case '03d':
-                case '03n':
-                case '04d':
-                case '04n':
-                    conditions = CONDITION_KEY.cloudy;
-                    break;
-                case '09d':
-                case '09n':
-                case '10d':
-                case '10n':
-                    conditions = CONDITION_KEY.rain;
-                    break;
-                case '11d':
-                case '11n':
+                case 2:
                     conditions = CONDITION_KEY.thunder;
                     break;
-                case '13d':
-                case '13n':
+                case 3:
+                case 4:
+                    conditions = CONDITION_KEY.rain;
+                    break;
+                case 6:
                     conditions = CONDITION_KEY.snow;
                     break;
-                case '50d':
-                case '50n':
+                case 7:
                     conditions = CONDITION_KEY.fog;
                     break;
-                default:
+                case 9:
                     conditions = CONDITION_KEY.unknown;
+                    break;
+                default:
+                    conditions = CONDITION_KEY.blank;
                     break;
             }
             localStorage.setItem("last_fetch_date", new Date());
             localStorage.setItem("last_fetch_conditions", conditions);
-            localStorage.setItem("last_fetch_icon_key", iconKey);
+            localStorage.setItem("last_fetch_details", conditionId + " " + json.weather[0].main);
             sendToApp(conditions);
         }
     );
@@ -86,7 +80,7 @@ function getWeather() {
     if(lastFetchDate
        && lastFetchConditions >= 0
        && new Date() - lastFetchDate < 900000){
-        console.log("using cached conditions: " + lastFetchConditions + " " + localStorage.getItem("last_fetch_icon_key"));
+        console.log("using cached conditions: " + lastFetchConditions + " " + localStorage.getItem("last_fetch_details"));
         sendToApp(lastFetchConditions);
     }
     else{
