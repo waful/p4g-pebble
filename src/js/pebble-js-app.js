@@ -7,7 +7,7 @@ var CONDITION_KEY = {
     fog: 6,
     unknown: 7,
     blank: 8
-}
+};
 
 var xhrRequest = function (url, type, callback) {
     var xhr = new XMLHttpRequest();

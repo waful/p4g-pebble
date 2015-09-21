@@ -68,29 +68,21 @@ static void bluetooth_callback(bool connected) {
 
 static void render_date_digit(uint8_t position, uint8_t digit){
     APP_LOG(APP_LOG_LEVEL_INFO, "start of render date digit: %d %d", position, digit);
-    GBitmap *local_bitmap = s_date_digit_bitmap_array[position];
-    BitmapLayer *local_layer = s_date_digit_layer_array[position];
-    if(local_bitmap != NULL){
-        gbitmap_destroy(local_bitmap);
+    if(s_date_digit_bitmap_array[position] != NULL){
+        gbitmap_destroy(s_date_digit_bitmap_array[position]);
     }
-    local_bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
-    bitmap_layer_set_bitmap(local_layer, local_bitmap);
-    s_date_digit_bitmap_array[position] = local_bitmap;
-    s_date_digit_layer_array[position] = local_layer;
+    s_date_digit_bitmap_array[position] = gbitmap_create_with_resource(s_digit_array[digit]);
+    bitmap_layer_set_bitmap(s_date_digit_layer_array[position], s_date_digit_bitmap_array[position]);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render date digit");
 }
 
 static void render_time_digit(uint8_t position, uint8_t digit){
     APP_LOG(APP_LOG_LEVEL_INFO, "start of render time digit: %d %d", position, digit);
-    GBitmap *local_bitmap = s_time_digit_bitmap_array[position];
-    BitmapLayer *local_layer = s_time_digit_layer_array[position];
-    if(local_bitmap != NULL){
-        gbitmap_destroy(local_bitmap);
+    if(s_time_digit_bitmap_array[position] != NULL){
+        gbitmap_destroy(s_time_digit_bitmap_array[position]);
     }
-    local_bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
-    bitmap_layer_set_bitmap(local_layer, local_bitmap);
-    s_time_digit_bitmap_array[position] = local_bitmap;
-    s_time_digit_layer_array[position] = local_layer;
+    s_time_digit_bitmap_array[position] = gbitmap_create_with_resource(s_digit_array[digit]);
+    bitmap_layer_set_bitmap(s_time_digit_layer_array[position], s_time_digit_bitmap_array[position]);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render time digit");
 }
 
@@ -419,19 +411,23 @@ static void main_window_unload(Window *window) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of tick handler");
     render_time();
     
     // every 5 minutes
     if(tick_time->tm_min % 5 == 0 && tick_time->tm_sec == 0) {
         // switch background
+        APP_LOG(APP_LOG_LEVEL_INFO, "tick handler background update");
         render_background();
     
         // try to get weather
+        APP_LOG(APP_LOG_LEVEL_INFO, "tick handler weather ping");
         DictionaryIterator *iter;
         app_message_outbox_begin(&iter);
         dict_write_uint8(iter, 0, 0);
         app_message_outbox_send();
     }
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of tick handler");
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
