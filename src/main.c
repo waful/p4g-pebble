@@ -66,7 +66,7 @@ static void bluetooth_callback(bool connected) {
     }
     bitmap_layer_set_bitmap(s_bluetooth_status_layer, s_bluetooth_status_bitmap);
     first_call = false;
-    APP_LOG(APP_LOG_LEVEL_INFO, "end of battery callback");
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of bluetooth callback");
 }
 
 static void render_digit(BitmapLayer *layer, GBitmap **bitmap, uint8_t digit){
