@@ -35,9 +35,8 @@ function locationSuccess(pos) {
             var conditions;
             switch(iconKey){
                 case '01d':
-                    conditions = CONDITION_KEY.clear_day;
-                    break;
                 case '01n':
+                    conditions = CONDITION_KEY.clear_day;
                     conditions = CONDITION_KEY.clear_night;
                     break;
                 case '03d':

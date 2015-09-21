@@ -26,6 +26,8 @@ static uint32_t s_digit_array[10];
 static uint32_t s_time_of_day_array[5];
 static uint32_t s_weather_icon_array[9];
 
+static uint8_t current_hour = 99;
+
 static void battery_callback(BatteryChargeState state) {
     static bool first_call = true;
     static uint8_t battery_level = 0;
@@ -99,45 +101,36 @@ static void render_day_of_week(uint8_t day_of_week){
     }
 }
 
-static void render_time_of_day(char time_buffer[]){
-    // hour
-    static uint8_t old_hour = 99;
-    uint8_t hour_buffer = (time_buffer[0] - '0') * 10 + (time_buffer[1] - '0');
-    if(hour_buffer != old_hour){
-        uint32_t res_id;
-    
-        // morning
-        if(hour_buffer >= 5 && hour_buffer <= 8 && time_buffer[4] != 'P'){
-            res_id = s_time_of_day_array[2];
-        }
-        // daytime
-        else if((hour_buffer >= 9 && hour_buffer <= 11 && time_buffer[4] != 'P')
-                 || (hour_buffer >= 1 && hour_buffer <= 5 && time_buffer[4] == 'P')
-                 || (hour_buffer >= 13 && hour_buffer <= 17)){
-            res_id = s_time_of_day_array[0];
-        }
-        // noon
-        else if(hour_buffer == 12 && time_buffer[4] != 'A'){
-            res_id = s_time_of_day_array[4];
-        }
-        // evening
-        else if((hour_buffer >= 6 && hour_buffer <= 9 && time_buffer[4] == 'P')
-                 || (hour_buffer >= 18 && hour_buffer <= 21)){
-            res_id = s_time_of_day_array[1];
-        }
-        // night
-        else{
-            res_id = s_time_of_day_array[3];
-        }
-        
-        if(s_time_of_day_bitmap != NULL){
-            gbitmap_destroy(s_time_of_day_bitmap);
-        }
-        s_time_of_day_bitmap = gbitmap_create_with_resource(res_id);
-        
-        bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_bitmap);
+static void render_time_of_day(uint8_t the_24h_hour){
+    uint32_t res_id;
+
+    // morning 5-8
+    if(the_24h_hour >= 5 && the_24h_hour <= 8){
+        res_id = s_time_of_day_array[2];
     }
-    old_hour = hour_buffer;
+    // daytime 9-11 13-17
+    else if((the_24h_hour >= 9 && the_24h_hour <= 11) || (the_24h_hour >= 13 && the_24h_hour <= 17)){
+        res_id = s_time_of_day_array[0];
+    }
+    // noon 12
+    else if(the_24h_hour == 12){
+        res_id = s_time_of_day_array[4];
+    }
+    // evening 18-21
+    else if(the_24h_hour >= 18 && the_24h_hour <= 21){
+        res_id = s_time_of_day_array[1];
+    }
+    // night 22-4
+    else{
+        res_id = s_time_of_day_array[3];
+    }
+
+    if(s_time_of_day_bitmap != NULL){
+        gbitmap_destroy(s_time_of_day_bitmap);
+    }
+    s_time_of_day_bitmap = gbitmap_create_with_resource(res_id);
+
+    bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_bitmap);
 }
 
 static void render_date(char date_buffer[]){
@@ -165,12 +158,12 @@ static void render_time() {
     time_t temp = time(NULL); 
     struct tm *tick_time = localtime(&temp);
 
-    static char old_time[] = "------";
-    char time_buffer[] = "0000  ";
+    static char old_time[] = "----";
+    char time_buffer[] = "0000";
     if(clock_is_24h_style() == true) {
-        strftime(time_buffer, sizeof(time_buffer), "%H%M  ", tick_time);
+        strftime(time_buffer, sizeof(time_buffer), "%H%M", tick_time);
     } else {
-        strftime(time_buffer, sizeof(time_buffer), "%I%M%p", tick_time);
+        strftime(time_buffer, sizeof(time_buffer), "%I%M", tick_time);
     }
     
     if(time_buffer[0] != old_time[0]){
@@ -179,8 +172,14 @@ static void render_time() {
     if(time_buffer[1] != old_time[1]){
         render_digit(s_time_digit_layer_array[1], &s_time_digit_bitmap_array[1], time_buffer[1] - '0');
         
-        // hour changed, check time of day
-        render_time_of_day(time_buffer);
+        // hour changed, get 24h hour and check time of day
+        char the_24h_buffer[] = "00";
+        strftime(the_24h_buffer, sizeof(the_24h_buffer), "%H", tick_time);
+        uint8_t hour_buffer = (the_24h_buffer[0] - '0') * 10 + (the_24h_buffer[1] - '0');
+        if(hour_buffer != current_hour){
+            render_time_of_day(hour_buffer);
+        }
+        current_hour = hour_buffer;
         
         // check date too
         char date_buffer[] = "00000";
@@ -199,6 +198,11 @@ static void render_time() {
 static void render_weather(uint8_t condition){
     if(s_weather_icon_bitmap != NULL){
         gbitmap_destroy(s_weather_icon_bitmap);
+    }
+    if(condition == 0){
+        if(current_hour >= 22 || current_hour <= 4){
+            condition = 1;
+        }
     }
     s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
     bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
