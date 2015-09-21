@@ -1,8 +1,6 @@
 #include <pebble.h>
-    
-#define KEY_TEMPERATURE 0
-#define KEY_CONDITIONS 1
-    
+#define KEY_CONDITIONS 0
+
 static Window *s_main_window;
 
 static TextLayer *s_day_of_week_layer;
@@ -22,16 +20,27 @@ static BitmapLayer *s_time_of_day_layer;
 static BitmapLayer *s_weather_icon_layer;
 
 static GBitmap *s_background_bitmap;
-static GBitmap *s_digit_array[10];
-static GBitmap *s_time_of_day_array[5];
 static GBitmap *s_weather_icon;
+static GBitmap *s_time_of_day_bitmap;
+static GBitmap *s_date_digit_1_bitmap;
+static GBitmap *s_date_digit_2_bitmap;
+static GBitmap *s_date_digit_3_bitmap;
+static GBitmap *s_date_digit_4_bitmap;
+static GBitmap *s_time_digit_1_bitmap;
+static GBitmap *s_time_digit_2_bitmap;
+static GBitmap *s_time_digit_3_bitmap;
+static GBitmap *s_time_digit_4_bitmap;
 
+static uint32_t s_digit_array[10];
+static uint32_t s_time_of_day_array[5];
 static uint32_t s_weather_icon_array[9];
 
-static void render_digit(BitmapLayer *layer, uint8_t digit){
-    // get the right bitmap
-    GBitmap *b_digit = s_digit_array[digit];
-    bitmap_layer_set_bitmap(layer, b_digit);
+static void render_digit(BitmapLayer *layer, GBitmap *bitmap, uint8_t digit){
+    if(bitmap != NULL){
+        gbitmap_destroy(bitmap);
+    }
+    bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
+    bitmap_layer_set_bitmap(layer, bitmap);
 }
 
 static void render_day_of_week(uint8_t day_of_week){
@@ -65,29 +74,34 @@ static void render_time_of_day(char time_buffer[]){
     static uint8_t old_hour = 99;
     uint8_t hour_buffer = (time_buffer[0] - '0') * 10 + (time_buffer[1] - '0');
     if(hour_buffer != old_hour){
+        if(s_time_of_day_bitmap != NULL){
+            gbitmap_destroy(s_time_of_day_bitmap);
+        }
+    
         // morning
         if(hour_buffer >= 5 && hour_buffer <= 8 && time_buffer[4] != 'P'){
-            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[2]);
+            s_time_of_day_bitmap = gbitmap_create_with_resource(s_time_of_day_array[2]);
         }
         // daytime
         else if((hour_buffer >= 9 && hour_buffer <= 11 && time_buffer[4] != 'P')
                  || (hour_buffer >= 1 && hour_buffer <= 5 && time_buffer[4] == 'P')
                  || (hour_buffer >= 13 && hour_buffer <= 17)){
-            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[0]);
+            s_time_of_day_bitmap = gbitmap_create_with_resource(s_time_of_day_array[0]);
         }
         // noon
         else if(hour_buffer == 12 && time_buffer[4] != 'A'){
-            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[4]);
+            s_time_of_day_bitmap = gbitmap_create_with_resource(s_time_of_day_array[4]);
         }
         // evening
         else if((hour_buffer >= 6 && hour_buffer <= 9 && time_buffer[4] == 'P')
                  || (hour_buffer >= 18 && hour_buffer <= 21)){
-            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[1]);
+            s_time_of_day_bitmap = gbitmap_create_with_resource(s_time_of_day_array[1]);
         }
         // night
         else{
-            bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_array[3]);
+            s_time_of_day_bitmap = gbitmap_create_with_resource(s_time_of_day_array[3]);
         }
+        bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_bitmap);
     }
     old_hour = hour_buffer;
 }
@@ -97,16 +111,16 @@ static void render_date(char date_buffer[]){
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
-        render_digit(s_date_digit_1_layer, date_buffer[0] - '0');
+        render_digit(s_date_digit_1_layer, s_date_digit_1_bitmap, date_buffer[0] - '0');
     }
     if(date_buffer[1] != old_date[1]){
-        render_digit(s_date_digit_2_layer, date_buffer[1] - '0');
+        render_digit(s_date_digit_2_layer, s_date_digit_2_bitmap, date_buffer[1] - '0');
     }
     if(date_buffer[2] != old_date[2]){
-        render_digit(s_date_digit_3_layer, date_buffer[2] - '0');
+        render_digit(s_date_digit_3_layer, s_date_digit_3_bitmap, date_buffer[2] - '0');
     }
     if(date_buffer[3] != old_date[3]){
-        render_digit(s_date_digit_4_layer, date_buffer[3] - '0');
+        render_digit(s_date_digit_4_layer, s_date_digit_4_bitmap, date_buffer[3] - '0');
     }
     if(date_buffer[4] != old_date[4]){
         render_day_of_week(date_buffer[4] - '0');
@@ -127,10 +141,10 @@ static void render_time() {
     }
     
     if(time_buffer[0] != old_time[0]){
-        render_digit(s_time_digit_1_layer, time_buffer[0] - '0');
+        render_digit(s_time_digit_1_layer, s_time_digit_1_bitmap, time_buffer[0] - '0');
     }
     if(time_buffer[1] != old_time[1]){
-        render_digit(s_time_digit_2_layer, time_buffer[1] - '0');
+        render_digit(s_time_digit_2_layer, s_time_digit_2_bitmap, time_buffer[1] - '0');
         
         // hour changed, check time of day
         render_time_of_day(time_buffer);
@@ -141,10 +155,10 @@ static void render_time() {
         render_date(date_buffer);
     }
     if(time_buffer[2] != old_time[2]){
-        render_digit(s_time_digit_3_layer, time_buffer[2] - '0');
+        render_digit(s_time_digit_3_layer, s_time_digit_3_bitmap, time_buffer[2] - '0');
     }
     if(time_buffer[3] != old_time[3]){
-        render_digit(s_time_digit_4_layer, time_buffer[3] - '0');
+        render_digit(s_time_digit_4_layer, s_time_digit_4_bitmap, time_buffer[3] - '0');
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
 }
@@ -206,34 +220,20 @@ static void setup_bitmaps(){
     // set up backgrounds
     s_background_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
     
-    // set up digits array
-    GBitmap *tmp_digit_array[10] = {
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_0),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_1),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_2),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_3),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_4),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_5),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_6),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_7),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_8),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DIGIT_9)
-    };
-    memcpy(s_digit_array, tmp_digit_array, sizeof(s_digit_array));
-    
-    // set up time of day array
-    GBitmap *tmp_time_of_day_array[5] = {
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DAYTIME),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_EVENING),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MORNING),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NIGHT),
-        gbitmap_create_with_resource(RESOURCE_ID_IMAGE_NOON)
-    };
-    memcpy(s_time_of_day_array, tmp_time_of_day_array, sizeof(s_time_of_day_array));
 }
 
 static void setup_bitmap_reference_arrays(){
     // set up time of day array
+    uint32_t tmp_time_of_day_array[5] = {
+        RESOURCE_ID_IMAGE_DAYTIME,
+        RESOURCE_ID_IMAGE_EVENING,
+        RESOURCE_ID_IMAGE_MORNING,
+        RESOURCE_ID_IMAGE_NIGHT,
+        RESOURCE_ID_IMAGE_NOON
+    };
+    memcpy(s_time_of_day_array, tmp_time_of_day_array, sizeof(s_time_of_day_array));
+    
+    // set up weather icon array
     uint32_t tmp_weather_icon_array[9] = {
         RESOURCE_ID_W_CLEARD,
         RESOURCE_ID_W_CLEARN,
@@ -246,6 +246,20 @@ static void setup_bitmap_reference_arrays(){
         RESOURCE_ID_W_UNKNOWN
     };
     memcpy(s_weather_icon_array, tmp_weather_icon_array, sizeof(s_weather_icon_array));
+    
+    uint32_t tmp_digit_array[10] = {
+        RESOURCE_ID_IMAGE_DIGIT_0,
+        RESOURCE_ID_IMAGE_DIGIT_1,
+        RESOURCE_ID_IMAGE_DIGIT_2,
+        RESOURCE_ID_IMAGE_DIGIT_3,
+        RESOURCE_ID_IMAGE_DIGIT_4,
+        RESOURCE_ID_IMAGE_DIGIT_5,
+        RESOURCE_ID_IMAGE_DIGIT_6,
+        RESOURCE_ID_IMAGE_DIGIT_7,
+        RESOURCE_ID_IMAGE_DIGIT_8,
+        RESOURCE_ID_IMAGE_DIGIT_9
+    };
+    memcpy(s_digit_array, tmp_digit_array, sizeof(s_digit_array));
 }
 
 static void setup_texts_and_fonts(){
@@ -272,14 +286,16 @@ static void main_window_unload(Window *window) {
     
     // destroy bitmaps
     gbitmap_destroy(s_background_bitmap);
-    uint8_t i;
-    for(i = 0; i < sizeof(s_digit_array)/sizeof(s_digit_array[0]); i++){
-        gbitmap_destroy(s_digit_array[i]);
-    }
-    for(i = 0; i < sizeof(s_time_of_day_array)/sizeof(s_time_of_day_array[0]); i++){
-        gbitmap_destroy(s_time_of_day_array[i]);
-    }
+    gbitmap_destroy(s_time_of_day_bitmap);
     gbitmap_destroy(s_weather_icon);
+    gbitmap_destroy(s_date_digit_1_bitmap);
+    gbitmap_destroy(s_date_digit_2_bitmap);
+    gbitmap_destroy(s_date_digit_3_bitmap);
+    gbitmap_destroy(s_date_digit_4_bitmap);
+    gbitmap_destroy(s_time_digit_1_bitmap);
+    gbitmap_destroy(s_time_digit_2_bitmap);
+    gbitmap_destroy(s_time_digit_3_bitmap);
+    gbitmap_destroy(s_time_digit_4_bitmap);
 
     // destroy layers
     bitmap_layer_destroy(s_background_layer);

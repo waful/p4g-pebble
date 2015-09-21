@@ -20,12 +20,16 @@ var xhrRequest = function (url, type, callback) {
 };
 
 function locationSuccess(pos) {
+    console.log("coords: " + pos.coords.latitude + ", " + pos.coords.longitude);
+    console.log("accuracy: " + pos.coords.accuracy);
+    
     var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
         pos.coords.latitude + "&lon=" + pos.coords.longitude;
 
     xhrRequest(url, 'GET',
         function (responseText) {
             var json = JSON.parse(responseText);
+            console.log("server says: " + JSON.stringify(json));
 
             var iconKey = json.weather[0].icon;
             var conditions;
@@ -89,7 +93,7 @@ function getWeather() {
     navigator.geolocation.getCurrentPosition(
         locationSuccess,
         locationError,
-        {timeout: 15000, maximumAge: 60000}
+        {timeout: 5000, maximumAge: 0}
     );
 }
 
