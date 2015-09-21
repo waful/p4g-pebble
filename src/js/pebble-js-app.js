@@ -69,6 +69,7 @@ function locationSuccess(pos) {
             }
             localStorage.setItem("last_fetch_date", new Date());
             localStorage.setItem("last_fetch_conditions", conditions);
+            localStorage.setItem("last_fetch_icon_key", iconKey);
             sendToApp(conditions);
         }
     );
@@ -85,7 +86,7 @@ function getWeather() {
     if(lastFetchDate
        && lastFetchConditions >= 0
        && new Date() - lastFetchDate < 900000){
-        console.log("using cached conditions: " + localStorage.getItem("last_fetch_conditions"));
+        console.log("using cached conditions: " + lastFetchConditions + " " + localStorage.getItem("last_fetch_icon_key"));
         sendToApp(lastFetchConditions);
     }
     else{

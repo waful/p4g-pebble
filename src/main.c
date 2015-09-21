@@ -31,7 +31,7 @@ static uint8_t current_hour = 99;
 static void battery_callback(BatteryChargeState state) {
     APP_LOG(APP_LOG_LEVEL_INFO, "start of battery callback");
     static bool first_call = true;
-    static uint8_t battery_level = 0;
+    static uint8_t battery_level = 100;
     battery_level = state.charge_percent;
     if(battery_level < 20){
         if(!first_call){
@@ -66,16 +66,32 @@ static void bluetooth_callback(bool connected) {
     APP_LOG(APP_LOG_LEVEL_INFO, "end of bluetooth callback");
 }
 
-static void render_digit(BitmapLayer **layer, GBitmap **bitmap, uint8_t digit){
-    APP_LOG(APP_LOG_LEVEL_INFO, "start of render digit: %d", digit);
-    GBitmap *local_bitmap = *bitmap;
+static void render_date_digit(uint8_t position, uint8_t digit){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render date digit: %d %d", position, digit);
+    GBitmap *local_bitmap = s_date_digit_bitmap_array[position];
+    BitmapLayer *local_layer = s_date_digit_layer_array[position];
     if(local_bitmap != NULL){
         gbitmap_destroy(local_bitmap);
     }
     local_bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
-    bitmap_layer_set_bitmap(*layer, local_bitmap);
-    *bitmap = local_bitmap;
-    APP_LOG(APP_LOG_LEVEL_INFO, "end of render digit");
+    bitmap_layer_set_bitmap(local_layer, local_bitmap);
+    s_date_digit_bitmap_array[position] = local_bitmap;
+    s_date_digit_layer_array[position] = local_layer;
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render date digit");
+}
+
+static void render_time_digit(uint8_t position, uint8_t digit){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render time digit: %d %d", position, digit);
+    GBitmap *local_bitmap = s_time_digit_bitmap_array[position];
+    BitmapLayer *local_layer = s_time_digit_layer_array[position];
+    if(local_bitmap != NULL){
+        gbitmap_destroy(local_bitmap);
+    }
+    local_bitmap = gbitmap_create_with_resource(s_digit_array[digit]);
+    bitmap_layer_set_bitmap(local_layer, local_bitmap);
+    s_time_digit_bitmap_array[position] = local_bitmap;
+    s_time_digit_layer_array[position] = local_layer;
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render time digit");
 }
 
 static void render_day_of_week(uint8_t day_of_week){
@@ -145,16 +161,16 @@ static void render_date(char date_buffer[]){
     static char old_date[] = "-----";
     
     if(date_buffer[0] != old_date[0]){
-        render_digit(&s_date_digit_layer_array[0], &s_date_digit_bitmap_array[0], date_buffer[0] - '0');
+        render_date_digit(0, date_buffer[0] - '0');
     }
     if(date_buffer[1] != old_date[1]){
-        render_digit(&s_date_digit_layer_array[1], &s_date_digit_bitmap_array[1], date_buffer[1] - '0');
+        render_date_digit(1, date_buffer[1] - '0');
     }
     if(date_buffer[2] != old_date[2]){
-        render_digit(&s_date_digit_layer_array[2], &s_date_digit_bitmap_array[2], date_buffer[2] - '0');
+        render_date_digit(2, date_buffer[2] - '0');
     }
     if(date_buffer[3] != old_date[3]){
-        render_digit(&s_date_digit_layer_array[3], &s_date_digit_bitmap_array[3], date_buffer[3] - '0');
+        render_date_digit(3, date_buffer[3] - '0');
     }
     if(date_buffer[4] != old_date[4]){
         render_day_of_week(date_buffer[4] - '0');
@@ -177,10 +193,10 @@ static void render_time() {
     }
     
     if(time_buffer[0] != old_time[0]){
-        render_digit(&s_time_digit_layer_array[0], &s_time_digit_bitmap_array[0], time_buffer[0] - '0');
+        render_time_digit(0, time_buffer[0] - '0');
     }
     if(time_buffer[1] != old_time[1]){
-        render_digit(&s_time_digit_layer_array[1], &s_time_digit_bitmap_array[1], time_buffer[1] - '0');
+        render_time_digit(1, time_buffer[1] - '0');
         
         // hour changed, get 24h hour and check time of day
         char the_24h_buffer[] = "00";
@@ -197,10 +213,10 @@ static void render_time() {
         render_date(date_buffer);
     }
     if(time_buffer[2] != old_time[2]){
-        render_digit(&s_time_digit_layer_array[2], &s_time_digit_bitmap_array[2], time_buffer[2] - '0');
+        render_time_digit(2, time_buffer[2] - '0');
     }
     if(time_buffer[3] != old_time[3]){
-        render_digit(&s_time_digit_layer_array[3], &s_time_digit_bitmap_array[3], time_buffer[3] - '0');
+        render_time_digit(3, time_buffer[3] - '0');
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render time");
@@ -231,8 +247,8 @@ static void render_weather(uint8_t condition){
             s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
         }
         bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
+        old_condition = condition;
     }
-    old_condition = condition;
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
 }
 
