@@ -73,6 +73,7 @@ static void render_date_digit(uint8_t position, uint8_t digit){
     }
     s_date_digit_bitmap_array[position] = gbitmap_create_with_resource(s_digit_array[digit]);
     bitmap_layer_set_bitmap(s_date_digit_layer_array[position], s_date_digit_bitmap_array[position]);
+    layer_mark_dirty((Layer *)s_date_digit_layer_array[position]);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render date digit");
 }
 
@@ -83,6 +84,7 @@ static void render_time_digit(uint8_t position, uint8_t digit){
     }
     s_time_digit_bitmap_array[position] = gbitmap_create_with_resource(s_digit_array[digit]);
     bitmap_layer_set_bitmap(s_time_digit_layer_array[position], s_time_digit_bitmap_array[position]);
+    layer_mark_dirty((Layer *)s_time_digit_layer_array[position]);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render time digit");
 }
 
@@ -145,6 +147,7 @@ static void render_time_of_day(uint8_t the_24h_hour){
     s_time_of_day_bitmap = gbitmap_create_with_resource(res_id);
 
     bitmap_layer_set_bitmap(s_time_of_day_layer, s_time_of_day_bitmap);
+    layer_mark_dirty((Layer *)s_time_of_day_layer);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render time of day");
 }
 
@@ -239,6 +242,7 @@ static void render_weather(uint8_t condition){
             s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
         }
         bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
+        layer_mark_dirty((Layer *)s_weather_icon_layer);
         old_condition = condition;
     }
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
@@ -256,6 +260,7 @@ static void render_background(){
     }
     s_background_bitmap = gbitmap_create_with_resource(s_backgrounds_array[next_shown]);
     bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
+    layer_mark_dirty((Layer *)s_background_layer);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render background");
 }
 
