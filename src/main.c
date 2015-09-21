@@ -163,7 +163,7 @@ static void render_date(char date_buffer[]){
         render_day_of_week(date_buffer[4] - '0');
     }
     memcpy(old_date, date_buffer, sizeof(old_date));
-    APP_LOG(APP_LOG_LEVEL_INFO, "ed of render date");
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render date");
 }
 
 static void render_time() {
@@ -210,7 +210,7 @@ static void render_time() {
 }
 
 static void render_weather(uint8_t condition){
-    APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather");
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather: %d", condition);
     if(s_weather_icon_bitmap != NULL){
         gbitmap_destroy(s_weather_icon_bitmap);
     }
@@ -395,16 +395,17 @@ static void main_window_unload(Window *window) {
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     render_time();
     
+    // every 5 minutes
     if(tick_time->tm_min % 5 == 0 && tick_time->tm_sec == 0) {
-        // switch background every 5 minutes
+        // switch background
         render_background();
-    }
     
-    // try to get weather
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-    dict_write_uint8(iter, 0, 0);
-    app_message_outbox_send();
+        // try to get weather
+        DictionaryIterator *iter;
+        app_message_outbox_begin(&iter);
+        dict_write_uint8(iter, 0, 0);
+        app_message_outbox_send();
+    }
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {

@@ -81,12 +81,12 @@ function locationError(err) {
 function getWeather() {
     // use cache if last fetch is younger than 15 minutes
     var lastFetchDate = Date.parse(localStorage.getItem("last_fetch_date"));
-    var lastFetchConditions = localStorage.getItem("last_fetch_conditions");
+    var lastFetchConditions = Number.parseInt(localStorage.getItem("last_fetch_conditions"));
     if(lastFetchDate
-       && lastFetchConditions
+       && lastFetchConditions >= 0
        && new Date() - lastFetchDate < 900000){
         console.log("using cached conditions: " + localStorage.getItem("last_fetch_conditions"));
-        sendToApp(localStorage.getItem("last_fetch_conditions"));
+        sendToApp(lastFetchConditions);
     }
     else{
         navigator.geolocation.getCurrentPosition(
