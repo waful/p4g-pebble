@@ -27,6 +27,42 @@ static uint32_t s_time_of_day_array[5];
 static uint32_t s_weather_icon_array[8];
 
 static uint8_t current_hour = 99;
+static uint8_t last_weather_condition = 10;
+
+static void get_weather_update(){
+    APP_LOG(APP_LOG_LEVEL_INFO, "getting weather update");
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+    dict_write_uint8(iter, 0, 0);
+    app_message_outbox_send();
+    APP_LOG(APP_LOG_LEVEL_INFO, "finished getting weather update");
+}
+
+static void render_weather(uint8_t condition){
+    APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather: %d", condition);
+    // set the correct clear sky icon based on time
+    if(condition == 0){
+        if(current_hour >= 22 || current_hour <= 4){
+            condition = 1;
+        }
+    }
+    if(condition != last_weather_condition){
+        if(condition == 8){
+            layer_set_hidden((Layer *)s_weather_icon_layer, true);
+        }
+        else{
+            layer_set_hidden((Layer *)s_weather_icon_layer, false);
+            if(s_weather_icon_bitmap != NULL){
+                gbitmap_destroy(s_weather_icon_bitmap);
+            }
+            s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
+            bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
+            layer_mark_dirty((Layer *)s_weather_icon_layer);
+        }
+        last_weather_condition = condition;
+    }
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
+}
 
 static void battery_callback(BatteryChargeState state) {
     APP_LOG(APP_LOG_LEVEL_INFO, "start of battery callback");
@@ -46,14 +82,18 @@ static void battery_callback(BatteryChargeState state) {
     APP_LOG(APP_LOG_LEVEL_INFO, "end of battery callback");
 }
 
+static void get_weather_update_timer_callback(void *data){
+    get_weather_update();
+}
+
 static void bluetooth_callback(bool connected) {
     APP_LOG(APP_LOG_LEVEL_INFO, "start of bluetooth callback");
     static bool first_call = true;
     if(connected){
         if(!first_call){
             vibes_long_pulse();
+            app_timer_register(2000, get_weather_update_timer_callback, NULL);
         }
-        
         layer_set_hidden((Layer *)s_bluetooth_status_layer, true);
     }
     else{
@@ -215,32 +255,6 @@ static void render_time() {
     }
     memcpy(old_time, time_buffer, sizeof(old_time));
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render time");
-}
-
-static void render_weather(uint8_t condition){
-    APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather: %d", condition);
-    static uint8_t old_condition = 10;
-    if(condition != old_condition){
-        if(condition == 0){
-            if(current_hour >= 22 || current_hour <= 4){
-                condition = 1;
-            }
-        }
-        if(condition == 8){
-            layer_set_hidden((Layer *)s_weather_icon_layer, true);
-        }
-        else{
-            layer_set_hidden((Layer *)s_weather_icon_layer, false);
-            if(s_weather_icon_bitmap != NULL){
-                gbitmap_destroy(s_weather_icon_bitmap);
-            }
-            s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
-            bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
-            layer_mark_dirty((Layer *)s_weather_icon_layer);
-        }
-        old_condition = condition;
-    }
-    APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
 }
 
 static void render_background(){
@@ -419,13 +433,10 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
         // switch background
         APP_LOG(APP_LOG_LEVEL_INFO, "tick handler background update");
         render_background();
-    
-        // try to get weather
+        
+        // get updated weather
         APP_LOG(APP_LOG_LEVEL_INFO, "tick handler weather ping");
-        DictionaryIterator *iter;
-        app_message_outbox_begin(&iter);
-        dict_write_uint8(iter, 0, 0);
-        app_message_outbox_send();
+        get_weather_update();
     }
     APP_LOG(APP_LOG_LEVEL_INFO, "end of tick handler");
 }
@@ -454,8 +465,28 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
     APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
 }
 
+static char *translate_error(AppMessageResult result) {
+  switch (result) {
+    case APP_MSG_OK: return "APP_MSG_OK";
+    case APP_MSG_SEND_TIMEOUT: return "APP_MSG_SEND_TIMEOUT";
+    case APP_MSG_SEND_REJECTED: return "APP_MSG_SEND_REJECTED";
+    case APP_MSG_NOT_CONNECTED: return "APP_MSG_NOT_CONNECTED";
+    case APP_MSG_APP_NOT_RUNNING: return "APP_MSG_APP_NOT_RUNNING";
+    case APP_MSG_INVALID_ARGS: return "APP_MSG_INVALID_ARGS";
+    case APP_MSG_BUSY: return "APP_MSG_BUSY";
+    case APP_MSG_BUFFER_OVERFLOW: return "APP_MSG_BUFFER_OVERFLOW";
+    case APP_MSG_ALREADY_RELEASED: return "APP_MSG_ALREADY_RELEASED";
+    case APP_MSG_CALLBACK_ALREADY_REGISTERED: return "APP_MSG_CALLBACK_ALREADY_REGISTERED";
+    case APP_MSG_CALLBACK_NOT_REGISTERED: return "APP_MSG_CALLBACK_NOT_REGISTERED";
+    case APP_MSG_OUT_OF_MEMORY: return "APP_MSG_OUT_OF_MEMORY";
+    case APP_MSG_CLOSED: return "APP_MSG_CLOSED";
+    case APP_MSG_INTERNAL_ERROR: return "APP_MSG_INTERNAL_ERROR";
+    default: return "UNKNOWN ERROR";
+  }
+}
+
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
-    APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+    APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed! %s", translate_error(reason));
 }
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {

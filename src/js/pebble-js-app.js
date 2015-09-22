@@ -77,11 +77,11 @@ function getWeather() {
     // use cache if last fetch is younger than 15 minutes
     var lastFetchDate = Date.parse(localStorage.getItem("last_fetch_date"));
     var lastFetchConditions = Number.parseInt(localStorage.getItem("last_fetch_conditions"));
-    if(lastFetchDate
-       && lastFetchConditions >= 0){
+    if(lastFetchDate && lastFetchConditions >= 0){
         console.log("using cached conditions: " + lastFetchConditions + " " + localStorage.getItem("last_fetch_details"));
         sendToApp(lastFetchConditions);
-        if(new Date() - lastFetchDate >= 900000){
+        // get new data if last fetch is older than 15 minutes or was a blank 
+        if(new Date() - lastFetchDate >= 900000 || lastFetchConditions == 8){
             getNewWeather();
         }
     }
