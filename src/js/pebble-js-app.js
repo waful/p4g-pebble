@@ -45,7 +45,7 @@ function locationSuccess(pos) {
                     conditions = CONDITION_KEY.thunder;
                     break;
                 case 3:
-                case 4:
+                case 5:
                     conditions = CONDITION_KEY.rain;
                     break;
                 case 6:
