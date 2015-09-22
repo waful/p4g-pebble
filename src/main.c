@@ -226,11 +226,6 @@ static void render_weather(uint8_t condition){
                 condition = 1;
             }
         }
-        if(condition == 1){
-            if(current_hour >= 5 && current_hour <= 21){
-                condition = 0;
-            }
-        }
         if(condition == 8){
             layer_set_hidden((Layer *)s_weather_icon_layer, true);
         }
