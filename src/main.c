@@ -235,9 +235,9 @@ static void render_weather(uint8_t condition){
                 gbitmap_destroy(s_weather_icon_bitmap);
             }
             s_weather_icon_bitmap = gbitmap_create_with_resource(s_weather_icon_array[condition]);
+            bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
+            layer_mark_dirty((Layer *)s_weather_icon_layer);
         }
-        bitmap_layer_set_bitmap(s_weather_icon_layer, s_weather_icon_bitmap);
-        layer_mark_dirty((Layer *)s_weather_icon_layer);
         old_condition = condition;
     }
     APP_LOG(APP_LOG_LEVEL_INFO, "end of render weather");
