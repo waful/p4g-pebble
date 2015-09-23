@@ -66,19 +66,17 @@ static void render_weather(uint8_t condition){
 
 static void battery_callback(BatteryChargeState state) {
     APP_LOG(APP_LOG_LEVEL_INFO, "start of battery callback");
-    static bool first_call = true;
     static uint8_t battery_level = 100;
     battery_level = state.charge_percent;
-    if(battery_level < 20){
-        if(!first_call){
-            vibes_short_pulse();
-        }
-        text_layer_set_text_color(s_day_of_week_layer, GColorRed);
+    
+    APP_LOG(APP_LOG_LEVEL_INFO, "battery level %d", battery_level);
+    if(battery_level <= 20){
+        text_layer_set_text_color(s_day_of_week_layer, GColorWhite);
     }
     else{
         text_layer_set_text_color(s_day_of_week_layer, GColorOrange);
     }
-    first_call = false;
+    APP_LOG(APP_LOG_LEVEL_INFO, "battery level %d", battery_level);
     APP_LOG(APP_LOG_LEVEL_INFO, "end of battery callback");
 }
 
@@ -92,7 +90,7 @@ static void bluetooth_callback(bool connected) {
     if(connected){
         if(!first_call){
             vibes_long_pulse();
-            app_timer_register(2000, get_weather_update_timer_callback, NULL);
+            app_timer_register(5000, get_weather_update_timer_callback, NULL);
         }
         layer_set_hidden((Layer *)s_bluetooth_status_layer, true);
     }
@@ -246,6 +244,9 @@ static void render_time() {
         char date_buffer[] = "00000";
         strftime(date_buffer, sizeof(date_buffer), "%m%d%w", tick_time);
         render_date(date_buffer);
+        
+        // if last weather was clear, check to see if daytime/nighttime changed
+        render_weather(last_weather_condition);
     }
     if(time_buffer[2] != old_time[2]){
         render_time_digit(2, time_buffer[2] - '0');
