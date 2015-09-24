@@ -18,6 +18,13 @@ var xhrRequest = function (url, type, callback) {
     xhr.send();
 };
 
+var reportCondition = function(code, name, raw){
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "http://api.cloudstitch.com/wafulbugs/magic-form/datasources/sheet", true);
+    xmlhttp.setRequestHeader("Content-type", "application/json");
+    xmlhttp.send(JSON.stringify({"Code": code, "Name": name, "Raw": raw}));
+};
+
 function locationSuccess(pos) {
     console.log("coords: " + pos.coords.latitude + ", " + pos.coords.longitude);
     console.log("accuracy: " + pos.coords.accuracy);
@@ -59,6 +66,7 @@ function locationSuccess(pos) {
                     break;
                 default:
                     conditions = CONDITION_KEY.blank;
+                    reportCondition(conditionId, json.weather[0].main, JSON.stringify(json.weather[0]));
                     break;
             }
             localStorage.setItem("last_fetch_date", new Date());

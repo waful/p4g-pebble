@@ -42,7 +42,7 @@ static void render_weather(uint8_t condition){
     APP_LOG(APP_LOG_LEVEL_INFO, "start of render weather: %d", condition);
     // set the correct clear sky icon based on time
     if(condition == 0){
-        if(current_hour >= 22 || current_hour <= 4){
+        if(current_hour >= 20 || current_hour <= 5){
             condition = 1;
         }
     }
