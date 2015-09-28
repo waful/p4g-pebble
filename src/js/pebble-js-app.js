@@ -25,11 +25,11 @@ var reportCondition = function(code, name, raw){
     xmlhttp.send(JSON.stringify({"Code": code, "Name": name, "Raw": raw}));
 };
 
-function locationSuccess(pos) {
+function locationSuccess(pos, forced) {
     console.log("coords: " + pos.coords.latitude + ", " + pos.coords.longitude);
     console.log("accuracy: " + pos.coords.accuracy);
     
-    var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
+    var url = "http://api.openweathermap.org/data/2.5/forecast?lat=" +
         pos.coords.latitude + "&lon=" + pos.coords.longitude;
 
     xhrRequest(url, 'GET',
@@ -37,7 +37,7 @@ function locationSuccess(pos) {
             var json = JSON.parse(responseText);
             console.log("server says: " + JSON.stringify(json));
 
-            var conditionId = parseInt(json.weather[0].id);
+            var conditionId = parseInt(json.list[0].weather[0].id);
             var conditions;
             switch(parseInt(conditionId/100)){
                 case 8:
@@ -90,19 +90,24 @@ function getWeather() {
         sendToApp(lastFetchConditions);
         // get new data if last fetch is older than 15 minutes or was a blank 
         if(new Date() - lastFetchDate >= 900000 || lastFetchConditions == 8){
-            getNewWeather();
+            getNewWeather(true);
+        }
+        else{
+            getNewWeather(false);
         }
     }
     else{
-        getNewWeather();
+        getNewWeather(true);
     }
 }
 
-function getNewWeather(){
+function getNewWeather(forced){
     navigator.geolocation.getCurrentPosition(
-        locationSuccess,
+        function(pos){
+            locationSuccess(pos, forced);
+        },
         locationError,
-        {timeout: 5000, maximumAge: 0}
+        {timeout: 10000, maximumAge: 0}
     );
 }
 

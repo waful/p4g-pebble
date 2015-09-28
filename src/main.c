@@ -429,13 +429,14 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     APP_LOG(APP_LOG_LEVEL_INFO, "start of tick handler");
     render_time();
     
-    // every 5 minutes
-    if(tick_time->tm_min % 5 == 0 && tick_time->tm_sec == 0) {
-        // switch background
+    // switch background every 5 minutes
+    if(tick_time->tm_min % 15 == 0 && tick_time->tm_sec == 0) {
         APP_LOG(APP_LOG_LEVEL_INFO, "tick handler background update");
         render_background();
-        
-        // get updated weather
+    }
+    
+    // get updated weather if last weather condition is blank or every 5 minutes
+    if(last_weather_condition == 8 || (tick_time->tm_min % 5 == 0 && tick_time->tm_sec == 0)) {
         APP_LOG(APP_LOG_LEVEL_INFO, "tick handler weather ping");
         get_weather_update();
     }
