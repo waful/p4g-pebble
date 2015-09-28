@@ -18,6 +18,16 @@ var xhrRequest = function (url, type, callback) {
     xhr.send();
 };
 
+function truncateDecimals (num, digits) {
+    var numS = num.toString(),
+        decPos = numS.indexOf('.'),
+        substrLength = decPos == -1 ? numS.length : 1 + decPos + digits,
+        trimmedResult = numS.substr(0, substrLength),
+        finalResult = isNaN(trimmedResult) ? 0 : trimmedResult;
+
+    return parseFloat(finalResult);
+}
+
 var reportCondition = function(code, name, raw){
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.open("POST", "http://api.cloudstitch.com/wafulbugs/magic-form/datasources/sheet", true);
@@ -26,55 +36,60 @@ var reportCondition = function(code, name, raw){
 };
 
 function locationSuccess(pos, forced) {
-    console.log("coords: " + pos.coords.latitude + ", " + pos.coords.longitude);
-    console.log("accuracy: " + pos.coords.accuracy);
+    var latt = pos.coords.latitude;
+    var longg = pos.coords.longitude;
+    var coordString = truncateDecimals(latt, 1) + ',' + truncateDecimals(longg, 1);
+    console.log("coords: " + coordString);
     
-    var url = "http://api.openweathermap.org/data/2.5/forecast?lat=" +
-        pos.coords.latitude + "&lon=" + pos.coords.longitude;
-
-    xhrRequest(url, 'GET',
-        function (responseText) {
-            var json = JSON.parse(responseText);
-            console.log("server says: " + JSON.stringify(json));
-
-            var conditionId = parseInt(json.list[0].weather[0].id);
-            var conditions;
-            switch(parseInt(conditionId/100)){
-                case 8:
-                    if(conditionId === 800){
-                        conditions = CONDITION_KEY.clear;
-                    }
-                    else{
-                        conditions = CONDITION_KEY.cloudy;
-                    }
-                    break;
-                case 2:
-                    conditions = CONDITION_KEY.thunder;
-                    break;
-                case 3:
-                case 5:
-                    conditions = CONDITION_KEY.rain;
-                    break;
-                case 6:
-                    conditions = CONDITION_KEY.snow;
-                    break;
-                case 7:
-                    conditions = CONDITION_KEY.fog;
-                    break;
-                case 9:
-                    conditions = CONDITION_KEY.unknown;
-                    break;
-                default:
-                    conditions = CONDITION_KEY.blank;
-                    reportCondition(conditionId, json.weather[0].main, JSON.stringify(json.weather[0]));
-                    break;
+    if(forced || localStorage.getItem("last_fetch_date") !== coordString){
+        localStorage.setItem("last_fetch_coords", coordString);
+        
+        var url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + latt + "&lon=" + longg;
+    
+        xhrRequest(url, 'GET',
+            function (responseText) {
+                var json = JSON.parse(responseText);
+                console.log("server says: " + JSON.stringify(json));
+    
+                var conditionId = parseInt(json.list[0].weather[0].id);
+                var conditions;
+                switch(parseInt(conditionId/100)){
+                    case 8:
+                        if(conditionId === 800 || conditionId === 801){
+                            conditions = CONDITION_KEY.clear;
+                        }
+                        else{
+                            conditions = CONDITION_KEY.cloudy;
+                        }
+                        break;
+                    case 2:
+                        conditions = CONDITION_KEY.thunder;
+                        break;
+                    case 3:
+                    case 5:
+                        conditions = CONDITION_KEY.rain;
+                        break;
+                    case 6:
+                        conditions = CONDITION_KEY.snow;
+                        break;
+                    case 7:
+                        conditions = CONDITION_KEY.fog;
+                        break;
+                    case 9:
+                        conditions = CONDITION_KEY.unknown;
+                        break;
+                    default:
+                        conditions = CONDITION_KEY.blank;
+                        reportCondition(conditionId, json.list[0].weather[0].main, JSON.stringify(json.list[0].weather[0]));
+                        break;
+                }
+                localStorage.setItem("last_fetch_date", new Date());
+                localStorage.setItem("last_fetch_conditions", conditions);
+                localStorage.setItem("last_fetch_details", conditionId + " " + json.list[0].weather[0].main);
+                sendToApp(conditions);
             }
-            localStorage.setItem("last_fetch_date", new Date());
-            localStorage.setItem("last_fetch_conditions", conditions);
-            localStorage.setItem("last_fetch_details", conditionId + " " + json.weather[0].main);
-            sendToApp(conditions);
-        }
-    );
+        );
+    }
 }
 
 function locationError(err) {
