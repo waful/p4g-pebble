@@ -45,6 +45,7 @@ function locationSuccess(pos, forced) {
         localStorage.setItem("last_fetch_coords", coordString);
         
         var url = "http://api.openweathermap.org/data/2.5/forecast?lat=" + latt + "&lon=" + longg;
+        url += "&APPID=bef13b283de23b11e51ebdfb093ef883";
     
         xhrRequest(url, 'GET',
             function (responseText) {
