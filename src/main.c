@@ -90,7 +90,7 @@ static void bluetooth_callback(bool connected) {
     if(connected){
         if(!first_call){
             vibes_long_pulse();
-            app_timer_register(5000, get_weather_update_timer_callback, NULL);
+            app_timer_register(2000, get_weather_update_timer_callback, NULL);
         }
         layer_set_hidden((Layer *)s_bluetooth_status_layer, true);
     }
@@ -261,7 +261,7 @@ static void render_time() {
 static void render_background(){
     APP_LOG(APP_LOG_LEVEL_INFO, "start of render background");
     static uint8_t last_shown = 9;
-    uint8_t next_shown = 9;
+    uint8_t next_shown = rand() % 7;
     while(next_shown == last_shown){
         next_shown = rand() % 7;
     }
