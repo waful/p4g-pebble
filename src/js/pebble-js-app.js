@@ -142,6 +142,6 @@ function sendToApp(conditions){
                          );
 }
 
-// Pebble.addEventListener('ready', getWeather);
+Pebble.addEventListener('ready', getWeather);
 
 Pebble.addEventListener('appmessage', getWeather);
