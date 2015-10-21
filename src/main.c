@@ -261,7 +261,7 @@ static void render_time() {
 static void render_background(){
     APP_LOG(APP_LOG_LEVEL_INFO, "start of render background");
     static uint8_t last_shown = 9;
-    uint8_t next_shown = rand() % 7;
+    uint8_t next_shown = 9;
     while(next_shown == last_shown){
         next_shown = rand() % 7;
     }
@@ -271,7 +271,7 @@ static void render_background(){
     s_background_bitmap = gbitmap_create_with_resource(s_backgrounds_array[next_shown]);
     bitmap_layer_set_bitmap(s_background_layer, s_background_bitmap);
     layer_mark_dirty((Layer *)s_background_layer);
-    APP_LOG(APP_LOG_LEVEL_INFO, "end of render background");
+    APP_LOG(APP_LOG_LEVEL_INFO, "end of render background %d", next_shown);
 }
 
 static void setup_layers(Window *window){
@@ -430,7 +430,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     render_time();
     
     // switch background every 5 minutes
-    if(tick_time->tm_min % 15 == 0 && tick_time->tm_sec == 0) {
+    if(tick_time->tm_min % 5 == 0 && tick_time->tm_sec == 0) {
         APP_LOG(APP_LOG_LEVEL_INFO, "tick handler background update");
         render_background();
     }
@@ -516,7 +516,8 @@ static void init() {
     bluetooth_connection_service_subscribe(bluetooth_callback);
     
     // open appmessage
-    app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+    // app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+    app_message_open(1, 1);
 }
 
 static void deinit() {

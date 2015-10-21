@@ -11,52 +11,6 @@
     "resources": {
         "media": [
             {
-                "file": "images/menu_icon.png",
-                "menuIcon": true,
-                "name": "MENU_ICON",
-                "type": "png"
-            },
-            {
-                "file": "images/status_red.png",
-                "name": "STATUS_RED",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_yukiko.png",
-                "name": "BG_YUKIKO",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_yu.png",
-                "name": "BG_YU",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_yosuke.png",
-                "name": "BG_YOSUKE",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_rise.png",
-                "name": "BG_RISE",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_naoto.png",
-                "name": "BG_NAOTO",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_kanji.png",
-                "name": "BG_KANJI",
-                "type": "png"
-            },
-            {
-                "file": "images/bg_chie.png",
-                "name": "BG_CHIE",
-                "type": "png"
-            },
-            {
                 "file": "images/w_unknown.png",
                 "name": "W_UNKNOWN",
                 "type": "png"
@@ -97,6 +51,11 @@
                 "type": "png"
             },
             {
+                "file": "images/status_red.png",
+                "name": "STATUS_RED",
+                "type": "png"
+            },
+            {
                 "file": "images/noon.png",
                 "name": "IMAGE_NOON",
                 "type": "png"
@@ -112,13 +71,19 @@
                 "type": "png"
             },
             {
+                "file": "images/menu_icon.png",
+                "menuIcon": true,
+                "name": "MENU_ICON",
+                "type": "png"
+            },
+            {
                 "file": "images/evening.png",
                 "name": "IMAGE_EVENING",
                 "type": "png"
             },
             {
-                "file": "images/daytime.png",
-                "name": "IMAGE_DAYTIME",
+                "file": "images/digit_9.png",
+                "name": "IMAGE_DIGIT_9",
                 "type": "png"
             },
             {
@@ -132,8 +97,23 @@
                 "type": "png"
             },
             {
-                "file": "images/digit_0.png",
-                "name": "IMAGE_DIGIT_0",
+                "file": "images/digit_6.png",
+                "name": "IMAGE_DIGIT_6",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_5.png",
+                "name": "IMAGE_DIGIT_5",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_4.png",
+                "name": "IMAGE_DIGIT_4",
+                "type": "png"
+            },
+            {
+                "file": "images/digit_3.png",
+                "name": "IMAGE_DIGIT_3",
                 "type": "png"
             },
             {
@@ -147,8 +127,48 @@
                 "type": "png"
             },
             {
-                "file": "images/digit_5.png",
-                "name": "IMAGE_DIGIT_5",
+                "file": "images/digit_0.png",
+                "name": "IMAGE_DIGIT_0",
+                "type": "png"
+            },
+            {
+                "file": "images/daytime.png",
+                "name": "IMAGE_DAYTIME",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_yukiko.png",
+                "name": "BG_YUKIKO",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_yu.png",
+                "name": "BG_YU",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_yosuke.png",
+                "name": "BG_YOSUKE",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_rise.png",
+                "name": "BG_RISE",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_naoto.png",
+                "name": "BG_NAOTO",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_kanji.png",
+                "name": "BG_KANJI",
+                "type": "png"
+            },
+            {
+                "file": "images/bg_chie.png",
+                "name": "BG_CHIE",
                 "type": "png"
             },
             {
@@ -156,26 +176,6 @@
                 "file": "fonts/Days.ttf",
                 "name": "FONT_DATE_22",
                 "type": "font"
-            },
-            {
-                "file": "images/digit_9.png",
-                "name": "IMAGE_DIGIT_9",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_4.png",
-                "name": "IMAGE_DIGIT_4",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_6.png",
-                "name": "IMAGE_DIGIT_6",
-                "type": "png"
-            },
-            {
-                "file": "images/digit_3.png",
-                "name": "IMAGE_DIGIT_3",
-                "type": "png"
             }
         ]
     },
@@ -185,7 +185,7 @@
         "basalt"
     ],
     "uuid": "088f4d0f-9962-4634-819a-a81d49cb2118",
-    "versionLabel": "1.18",
+    "versionLabel": "1.20",
     "watchapp": {
         "watchface": true
     }
